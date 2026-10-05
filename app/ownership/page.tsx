@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 import { getSecCompanyOwnership } from '@/src/lib/secApi';
 import { isValidSecIssuerCik } from '@/src/lib/secApiCore';
-import type { SecOwnershipSource } from '@/src/lib/secApiTypes';
+import type { SecCompanyOwnershipResponse, SecOwnershipSource } from '@/src/lib/secApiTypes';
 
 export const metadata = {
   title: 'Company ownership',
@@ -49,7 +49,7 @@ export default async function OwnershipPage({ searchParams }: { searchParams: Pr
   const validCik = !cik || isValidSecIssuerCik(cik);
   const ready = Boolean(cik && validCik);
 
-  let response = null;
+  let response: SecCompanyOwnershipResponse | null = null;
   let error: string | null = null;
   if (ready) {
     try {
@@ -62,6 +62,8 @@ export default async function OwnershipPage({ searchParams }: { searchParams: Pr
   const company = response?.data.company;
   const positions = response?.data.positions || [];
   const beneficialPositions = response?.data.beneficialOwnershipPositions || [];
+  const pagination = response?.pagination;
+  const beneficialOwnershipPagination = response?.beneficialOwnershipPagination;
   const meta = response?.meta;
 
   return (
@@ -121,7 +123,7 @@ export default async function OwnershipPage({ searchParams }: { searchParams: Pr
         </section>
       ) : null}
 
-      {company && meta ? (
+      {company && meta && pagination && beneficialOwnershipPagination ? (
         <>
           <section className="detail-hero compact-hero">
             <div className="filing-topline">
@@ -153,7 +155,7 @@ export default async function OwnershipPage({ searchParams }: { searchParams: Pr
                 <p className="eyebrow">Current Section 16-derived positions</p>
                 <h2>{positions.length} admitted position{positions.length === 1 ? '' : 's'}</h2>
               </div>
-              <span className="response-meta">{response.pagination.returned} of {response.pagination.total} returned</span>
+              <span className="response-meta">{pagination.returned} of {pagination.total} returned</span>
             </div>
             {positions.length > 0 ? (
               <div className="ownership-list">
@@ -194,8 +196,8 @@ export default async function OwnershipPage({ searchParams }: { searchParams: Pr
             ) : (
               <section className="notice-panel"><p>No commercially admitted current Section 16-derived positions were returned for this company.</p></section>
             )}
-            {response.pagination.hasMore ? (
-              <section className="notice-panel"><p>The public response is capped at {response.pagination.limit} rows for this request; {response.pagination.total} admitted Section 16-derived positions are available.</p></section>
+            {pagination.hasMore ? (
+              <section className="notice-panel"><p>The public response is capped at {pagination.limit} rows for this request; {pagination.total} admitted Section 16-derived positions are available.</p></section>
             ) : null}
           </section>
 
@@ -205,7 +207,7 @@ export default async function OwnershipPage({ searchParams }: { searchParams: Pr
                 <p className="eyebrow">Schedule 13 beneficial aggregates</p>
                 <h2>{beneficialPositions.length} admitted aggregate{beneficialPositions.length === 1 ? '' : 's'}</h2>
               </div>
-              <span className="response-meta">{response.beneficialOwnershipPagination.returned} of {response.beneficialOwnershipPagination.total} returned</span>
+              <span className="response-meta">{beneficialOwnershipPagination.returned} of {beneficialOwnershipPagination.total} returned</span>
             </div>
             {beneficialPositions.length > 0 ? (
               <div className="ownership-list">
