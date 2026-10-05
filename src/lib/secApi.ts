@@ -1,12 +1,21 @@
 import 'server-only';
 
 import {
+  buildFilingDiffPath,
   buildFilingSearchPath,
+  buildFilingSectionPath,
+  buildFilingSectionsPath,
   DEFAULT_SEC_API_BASE_URL,
   normalizeApiBaseUrl,
   type FilingSearchInput,
 } from './secApiCore';
-import type { SecFilingResponse, SecFilingSearchResponse } from './secApiTypes';
+import type {
+  SecFilingDiffResponse,
+  SecFilingResponse,
+  SecFilingSearchResponse,
+  SecFilingSectionResponse,
+  SecFilingSectionsResponse,
+} from './secApiTypes';
 
 export class SecApiRequestError extends Error {
   constructor(
@@ -95,6 +104,48 @@ function parseFilingResponse(payload: unknown): SecFilingResponse {
   return payload as unknown as SecFilingResponse;
 }
 
+function parseSectionsResponse(payload: unknown): SecFilingSectionsResponse {
+  if (
+    !isRecord(payload) ||
+    !isRecord(payload.data) ||
+    !isRecord(payload.data.filing) ||
+    !Array.isArray(payload.data.filing.sections) ||
+    !Array.isArray(payload.data.filing.events) ||
+    !isRecord(payload.meta)
+  ) {
+    throw new SecApiRequestError('The SEC API returned an unexpected filing-sections response.', 502);
+  }
+  return payload as unknown as SecFilingSectionsResponse;
+}
+
+function parseSectionResponse(payload: unknown): SecFilingSectionResponse {
+  if (
+    !isRecord(payload) ||
+    !isRecord(payload.data) ||
+    typeof payload.data.accessionNumber !== 'string' ||
+    !isRecord(payload.data.section) ||
+    typeof payload.data.section.text !== 'string' ||
+    !isRecord(payload.meta)
+  ) {
+    throw new SecApiRequestError('The SEC API returned an unexpected filing-section response.', 502);
+  }
+  return payload as unknown as SecFilingSectionResponse;
+}
+
+function parseDiffResponse(payload: unknown): SecFilingDiffResponse {
+  if (
+    !isRecord(payload) ||
+    !isRecord(payload.data) ||
+    !isRecord(payload.data.diff) ||
+    !Array.isArray(payload.data.diff.sections) ||
+    !isRecord(payload.data.diff.summary) ||
+    !isRecord(payload.meta)
+  ) {
+    throw new SecApiRequestError('The SEC API returned an unexpected filing-diff response.', 502);
+  }
+  return payload as unknown as SecFilingDiffResponse;
+}
+
 export async function searchSecFilings(
   input: FilingSearchInput,
 ): Promise<SecFilingSearchResponse> {
@@ -104,5 +155,29 @@ export async function searchSecFilings(
 export async function getSecFiling(accessionNumber: string): Promise<SecFilingResponse> {
   return parseFilingResponse(
     await requestJson(`/filings/${encodeURIComponent(accessionNumber)}`),
+  );
+}
+
+export async function getSecFilingSections(
+  accessionNumber: string,
+): Promise<SecFilingSectionsResponse> {
+  return parseSectionsResponse(await requestJson(buildFilingSectionsPath(accessionNumber)));
+}
+
+export async function getSecFilingSection(
+  accessionNumber: string,
+  sectionKey: string,
+): Promise<SecFilingSectionResponse> {
+  return parseSectionResponse(
+    await requestJson(buildFilingSectionPath(accessionNumber, sectionKey)),
+  );
+}
+
+export async function diffSecFilings(
+  fromAccessionNumber: string,
+  toAccessionNumber: string,
+): Promise<SecFilingDiffResponse> {
+  return parseDiffResponse(
+    await requestJson(buildFilingDiffPath(fromAccessionNumber, toAccessionNumber)),
   );
 }

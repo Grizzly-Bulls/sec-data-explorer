@@ -2,7 +2,11 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { getSecFiling, SecApiRequestError } from '@/src/lib/secApi';
-import { isValidAccessionNumber } from '@/src/lib/secApiCore';
+import {
+  buildExplorerFilingDiffHref,
+  isValidAccessionNumber,
+  supportsFilingIntelligence,
+} from '@/src/lib/secApiCore';
 
 export const metadata = {
   title: 'Filing detail',
@@ -34,6 +38,7 @@ export default async function FilingDetailPage({ params }: { params: Promise<{ a
   }
 
   const filing = response.data.filing;
+  const hasIntelligence = supportsFilingIntelligence(filing.formType);
 
   return (
     <div className="shell page-stack">
@@ -47,6 +52,12 @@ export default async function FilingDetailPage({ params }: { params: Promise<{ a
         <p className="accession"><code>{filing.accessionNumber}</code></p>
         <div className="button-row">
           <a className="button primary" href={filing.filingDirectoryUrl} target="_blank" rel="noreferrer">Open SEC filing directory ↗</a>
+          {hasIntelligence ? (
+            <>
+              <Link className="button secondary" href={`/filings/${filing.accessionNumber}/sections`}>Inspect extracted sections</Link>
+              <Link className="button secondary" href={buildExplorerFilingDiffHref(filing.accessionNumber)}>Compare this filing</Link>
+            </>
+          ) : null}
         </div>
       </section>
 

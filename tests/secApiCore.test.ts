@@ -2,11 +2,17 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  buildExplorerFilingDiffHref,
   buildExplorerSearchHref,
+  buildFilingDiffPath,
   buildFilingSearchPath,
+  buildFilingSectionPath,
+  buildFilingSectionsPath,
   isValidAccessionNumber,
+  isValidSectionKey,
   normalizeApiBaseUrl,
   parseNonNegativeOffset,
+  supportsFilingIntelligence,
 } from '../src/lib/secApiCore';
 
 test('normalizes the SEC API base URL without changing the public default', () => {
@@ -31,6 +37,41 @@ test('builds local search links without leaking machine API credentials', () => 
 test('validates exact SEC accession-number shape', () => {
   assert.equal(isValidAccessionNumber('0000320193-26-000077'), true);
   assert.equal(isValidAccessionNumber('0000320193-2026-77'), false);
+});
+
+test('validates stable filing section keys', () => {
+  assert.equal(isValidSectionKey('item-1-business'), true);
+  assert.equal(isValidSectionKey('Item 1'), false);
+  assert.equal(isValidSectionKey('a'.repeat(81)), false);
+});
+
+test('identifies filing forms supported by the public intelligence surface', () => {
+  assert.equal(supportsFilingIntelligence('10-K'), true);
+  assert.equal(supportsFilingIntelligence('10-Q/A'), true);
+  assert.equal(supportsFilingIntelligence('8-K'), true);
+  assert.equal(supportsFilingIntelligence('DEF 14A'), false);
+});
+
+test('builds filing intelligence machine paths from explicit identities', () => {
+  assert.equal(
+    buildFilingSectionsPath('0000320193-26-000077'),
+    '/filings/0000320193-26-000077/sections',
+  );
+  assert.equal(
+    buildFilingSectionPath('0000320193-26-000077', 'item-1-business'),
+    '/filings/0000320193-26-000077/sections/item-1-business',
+  );
+  assert.equal(
+    buildFilingDiffPath('0000320193-25-000079', '0000320193-26-000077'),
+    '/filing-diff?from=0000320193-25-000079&to=0000320193-26-000077',
+  );
+});
+
+test('builds local diff links without machine credentials', () => {
+  assert.equal(
+    buildExplorerFilingDiffHref('0000320193-25-000079'),
+    '/filing-diff?from=0000320193-25-000079',
+  );
 });
 
 test('offset parsing fails closed to the first page', () => {
