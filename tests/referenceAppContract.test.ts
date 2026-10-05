@@ -3,6 +3,9 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 const client = readFileSync(new URL('../src/lib/secApi.ts', import.meta.url), 'utf8');
+const hostedDemo = readFileSync(new URL('../src/lib/hostedDemo.ts', import.meta.url), 'utf8');
+const healthRoute = readFileSync(new URL('../app/api/health/route.ts', import.meta.url), 'utf8');
+const dockerfile = readFileSync(new URL('../Dockerfile', import.meta.url), 'utf8');
 const core = readFileSync(new URL('../src/lib/secApiCore.ts', import.meta.url), 'utf8');
 const sectionsPage = readFileSync(new URL('../app/filings/[accessionNumber]/sections/page.tsx', import.meta.url), 'utf8');
 const diffPage = readFileSync(new URL('../app/filing-diff/page.tsx', import.meta.url), 'utf8');
@@ -14,7 +17,7 @@ const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.me
 
 test('the machine API adapter is explicitly server-only', () => {
   assert.match(client, /import 'server-only'/);
-  assert.match(client, /process\.env\.GRIZZLY_BULLS_API_KEY/);
+  assert.match(client, /resolveSecServerCredential/);
   assert.doesNotMatch(client, /NEXT_PUBLIC_/);
 });
 
@@ -23,6 +26,20 @@ test('the reference app points at the versioned public SEC API rather than SEC.g
   assert.doesNotMatch(client, /sec\.gov/i);
   assert.match(envExample, /GRIZZLY_BULLS_API_KEY=your_key_here/);
   assert.doesNotMatch(envExample, /NEXT_PUBLIC_/);
+});
+
+test('hosted demo mode uses a dedicated server-only credential and bounded edge limiter', () => {
+  assert.match(hostedDemo, /GRIZZLY_BULLS_SEC_DEMO_ENABLED/);
+  assert.match(hostedDemo, /GRIZZLY_BULLS_SEC_DEMO_API_KEY/);
+  assert.match(hostedDemo, /HOSTED_DEMO_REQUESTS_PER_WINDOW = 30/);
+  assert.match(hostedDemo, /HOSTED_DEMO_WINDOW_MS = 60_000/);
+  assert.match(client, /identifyHostedDemoClient/);
+  assert.match(client, /hostedDemoRateLimiter\.consume/);
+  assert.doesNotMatch(hostedDemo, /NEXT_PUBLIC_/);
+  assert.match(healthRoute, /service: 'sec-data-explorer'/);
+  assert.match(healthRoute, /Cache-Control/);
+  assert.doesNotMatch(healthRoute, /API_KEY/);
+  assert.match(dockerfile, /USER nextjs/);
 });
 
 test('filing intelligence stays on reviewed public routes and explicit identities', () => {

@@ -12,12 +12,14 @@ The current application may demonstrate bounded filing discovery, exact filing l
 
 ## API key boundary
 
-`GRIZZLY_BULLS_API_KEY` is a server-only secret.
+API credentials are server-only secrets.
 
-- Never expose it through `NEXT_PUBLIC_*`, rendered HTML, client JavaScript, browser storage, URLs, analytics, logs, screenshots, fixtures, or committed files.
+- Never expose `GRIZZLY_BULLS_API_KEY` or `GRIZZLY_BULLS_SEC_DEMO_API_KEY` through `NEXT_PUBLIC_*`, rendered HTML, client JavaScript, browser storage, URLs, analytics, logs, screenshots, fixtures, or committed files.
 - Browser components must not call the machine API directly while browser CORS is intentionally not part of the integration contract.
-- Local clones use the developer's own server-side key.
-- A future public hosted demo must use a dedicated first-party demo credential plus separate reviewed abuse controls; never place a normal customer key behind unrestricted public traffic.
+- Local clones use the developer's own `GRIZZLY_BULLS_API_KEY`.
+- The public hosted demo must opt into `GRIZZLY_BULLS_SEC_DEMO_ENABLED=true` and use only the dedicated `GRIZZLY_BULLS_SEC_DEMO_API_KEY`. It must fail closed rather than fall back to a normal customer key.
+- Hosted-demo requests pass through the bounded per-client app-edge limiter before the machine API call. The dedicated credential's server-side entitlement/quota remains the durable authority across app restarts or replicas.
+- Reverse proxies for the hosted demo must overwrite or otherwise normalize the client-IP headers trusted by the limiter and must not expose the application container directly to the public network.
 
 ## SEC semantics
 
@@ -51,6 +53,8 @@ browser
 ```
 
 Do not add a database, account system, queue, ingestion worker, SEC fetcher, or private service dependency without a measured requirement.
+
+The hosted-demo limiter is intentionally process-local defense in depth. Do not turn it into an account/quota database; durable entitlement and usage enforcement belong to the SEC API credential authority.
 
 ## Public copy
 

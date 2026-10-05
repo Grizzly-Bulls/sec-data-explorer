@@ -2,6 +2,8 @@
 
 SEC Data Explorer is an open-source Next.js reference application for the [Grizzly Bulls SEC Data API](https://grizzlybulls.com/sec-api).
 
+A public hosted copy is available at [sec-demo.grizzlybulls.com](https://sec-demo.grizzlybulls.com). Local clones use the same public API contract with their own server-side API key.
+
 It shows how to build server-side applications against retained SEC filing data, canonical company financials, and reviewed ownership surfaces without operating an EDGAR ingestion, normalization, evidence-retention, or API-serving stack yourself.
 
 The application uses the same public API contract available to any developer. It does not import private Grizzly Bulls code, connect to Grizzly Bulls databases, scrape SEC.gov, or maintain a second SEC-data source of truth.
@@ -87,6 +89,20 @@ https://grizzlybulls.com/api/v1/sec
 ```
 
 `GRIZZLY_BULLS_API_KEY` is read only by the server-side adapter under `src/lib/`. The repository has no SEC database, EDGAR acquisition pipeline, account system, queue, or private Grizzly Bulls dependency.
+
+### Hosted-demo boundary
+
+The public hosted deployment uses a dedicated first-party credential rather than a customer credential:
+
+```bash
+GRIZZLY_BULLS_SEC_DEMO_ENABLED=true
+GRIZZLY_BULLS_SEC_DEMO_API_KEY=<server-only dedicated demo credential>
+GRIZZLY_BULLS_SEC_DEMO_REVISION=<deployed git commit>
+```
+
+When hosted-demo mode is enabled, the adapter refuses to fall back to `GRIZZLY_BULLS_API_KEY`. Requests are also bounded to 30 machine-API calls per client in any rolling 60-second window before they reach the upstream API. The in-process limiter is defense in depth; the dedicated credential's SEC API entitlement and usage limits remain the durable quota authority across application restarts.
+
+The reverse proxy must normalize the client-address headers used by the limiter (`CF-Connecting-IP`, `X-Real-IP`, or `X-Forwarded-For`) and the application container should be exposed only on a loopback/private listener. `GET /api/health` reports readiness, deployment mode, and optional revision without returning credential material.
 
 ## Public API examples
 
@@ -189,6 +205,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) and [AGENTS.md](./AGENTS.md) before ope
 
 ## Links
 
+- [Hosted demo](https://sec-demo.grizzlybulls.com)
 - [SEC Data API](https://grizzlybulls.com/sec-api)
 - [OpenAPI 3.1 contract](https://grizzlybulls.com/api/v1/sec/openapi)
 - [Grizzly Bulls](https://grizzlybulls.com)
