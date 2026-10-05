@@ -4,6 +4,7 @@ import Link from 'next/link';
 import './globals.css';
 import './intelligence.css';
 import './financials.css';
+import './ownership.css';
 
 export const metadata: Metadata = {
   title: {
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
     template: '%s · SEC Data Explorer',
   },
   description:
-    'Open-source reference app for exploring retained SEC filings, filing intelligence, and point-in-time financials with the Grizzly Bulls SEC Data API.',
+    'Open-source reference app for exploring retained SEC filings, filing intelligence, point-in-time financials, and reviewed ownership with the Grizzly Bulls SEC Data API.',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               <Link href="/filings">Filings</Link>
               <Link href="/filing-diff">Diffs</Link>
               <Link href="/financials">Financials</Link>
+              <Link href="/ownership">Ownership</Link>
               <a href="https://github.com/Grizzly-Bulls/sec-data-explorer">GitHub</a>
             </nav>
           </div>

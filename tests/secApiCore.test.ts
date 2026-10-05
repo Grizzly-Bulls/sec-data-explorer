@@ -3,13 +3,17 @@ import test from 'node:test';
 
 import {
   buildCompanyFinancialsPath,
+  buildCompanyOwnershipPath,
   buildExplorerFilingDiffHref,
   buildExplorerFinancialsHref,
+  buildExplorerInstitutionalHoldingsHref,
+  buildExplorerOwnershipHref,
   buildExplorerSearchHref,
   buildFilingDiffPath,
   buildFilingSearchPath,
   buildFilingSectionPath,
   buildFilingSectionsPath,
+  buildInstitutionalHoldingsPath,
   isValidAccessionNumber,
   isValidAsOfTimestamp,
   isValidFinancialMetricKey,
@@ -19,6 +23,7 @@ import {
   normalizeApiBaseUrl,
   parseNonNegativeOffset,
   supportsFilingIntelligence,
+  supportsInstitutionalHoldings,
 } from '../src/lib/secApiCore';
 
 test('normalizes the SEC API base URL without changing the public default', () => {
@@ -51,11 +56,14 @@ test('validates stable filing section keys', () => {
   assert.equal(isValidSectionKey('a'.repeat(81)), false);
 });
 
-test('identifies filing forms supported by the public intelligence surface', () => {
+test('identifies filing forms supported by reviewed filing-specific surfaces', () => {
   assert.equal(supportsFilingIntelligence('10-K'), true);
   assert.equal(supportsFilingIntelligence('10-Q/A'), true);
   assert.equal(supportsFilingIntelligence('8-K'), true);
   assert.equal(supportsFilingIntelligence('DEF 14A'), false);
+  assert.equal(supportsInstitutionalHoldings('13F-HR'), true);
+  assert.equal(supportsInstitutionalHoldings('13F-HR/A'), true);
+  assert.equal(supportsInstitutionalHoldings('13F-NT'), false);
 });
 
 test('builds filing intelligence machine paths from explicit identities', () => {
@@ -107,6 +115,29 @@ test('builds canonical company-financial paths without changing the as-of timest
   assert.equal(
     buildExplorerFinancialsHref({ cik: '0000320193', period: 'annual', metric: 'Revenue' }),
     '/financials?cik=0000320193&period=annual&metric=Revenue',
+  );
+});
+
+test('builds company ownership and exact-filing 13F paths as separate identities', () => {
+  assert.equal(
+    buildCompanyOwnershipPath({ cik: '0000320193', limit: 25 }),
+    '/companies/0000320193/ownership?limit=25',
+  );
+  assert.equal(
+    buildInstitutionalHoldingsPath({
+      accessionNumber: '0001067983-26-000003',
+      limit: 25,
+      offset: 50,
+    }),
+    '/filings/0001067983-26-000003/institutional-holdings?limit=25&offset=50',
+  );
+  assert.equal(
+    buildExplorerOwnershipHref('0000320193'),
+    '/ownership?cik=0000320193',
+  );
+  assert.equal(
+    buildExplorerInstitutionalHoldingsHref('0001067983-26-000003', 25),
+    '/institutional-holdings?accession=0001067983-26-000003&offset=25',
   );
 });
 

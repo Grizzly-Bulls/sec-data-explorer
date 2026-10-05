@@ -2,22 +2,28 @@ import 'server-only';
 
 import {
   buildCompanyFinancialsPath,
+  buildCompanyOwnershipPath,
   buildFilingDiffPath,
   buildFilingSearchPath,
   buildFilingSectionPath,
   buildFilingSectionsPath,
+  buildInstitutionalHoldingsPath,
   DEFAULT_SEC_API_BASE_URL,
   normalizeApiBaseUrl,
   type CompanyFinancialsInput,
+  type CompanyOwnershipInput,
   type FilingSearchInput,
+  type InstitutionalHoldingsInput,
 } from './secApiCore';
 import type {
   SecCompanyFinancialsResponse,
+  SecCompanyOwnershipResponse,
   SecFilingDiffResponse,
   SecFilingResponse,
   SecFilingSearchResponse,
   SecFilingSectionResponse,
   SecFilingSectionsResponse,
+  SecInstitutionalHoldingsResponse,
 } from './secApiTypes';
 
 export class SecApiRequestError extends Error {
@@ -165,6 +171,39 @@ function parseCompanyFinancialsResponse(payload: unknown): SecCompanyFinancialsR
   return payload as unknown as SecCompanyFinancialsResponse;
 }
 
+function parseCompanyOwnershipResponse(payload: unknown): SecCompanyOwnershipResponse {
+  if (
+    !isRecord(payload) ||
+    !isRecord(payload.data) ||
+    !isRecord(payload.data.company) ||
+    !Array.isArray(payload.data.positions) ||
+    !Array.isArray(payload.data.beneficialOwnershipPositions) ||
+    !isRecord(payload.pagination) ||
+    !isRecord(payload.beneficialOwnershipPagination) ||
+    !isRecord(payload.meta) ||
+    !isRecord(payload.meta.coverage) ||
+    !isRecord(payload.meta.semantics)
+  ) {
+    throw new SecApiRequestError('The SEC API returned an unexpected company-ownership response.', 502);
+  }
+  return payload as unknown as SecCompanyOwnershipResponse;
+}
+
+function parseInstitutionalHoldingsResponse(payload: unknown): SecInstitutionalHoldingsResponse {
+  if (
+    !isRecord(payload) ||
+    !isRecord(payload.data) ||
+    !isRecord(payload.data.filing) ||
+    !Array.isArray(payload.data.holdings) ||
+    !isRecord(payload.pagination) ||
+    !isRecord(payload.meta) ||
+    !isRecord(payload.meta.semantics)
+  ) {
+    throw new SecApiRequestError('The SEC API returned an unexpected institutional-holdings response.', 502);
+  }
+  return payload as unknown as SecInstitutionalHoldingsResponse;
+}
+
 export async function searchSecFilings(
   input: FilingSearchInput,
 ): Promise<SecFilingSearchResponse> {
@@ -206,5 +245,21 @@ export async function getSecCompanyFinancials(
 ): Promise<SecCompanyFinancialsResponse> {
   return parseCompanyFinancialsResponse(
     await requestJson(buildCompanyFinancialsPath(input)),
+  );
+}
+
+export async function getSecCompanyOwnership(
+  input: CompanyOwnershipInput,
+): Promise<SecCompanyOwnershipResponse> {
+  return parseCompanyOwnershipResponse(
+    await requestJson(buildCompanyOwnershipPath(input)),
+  );
+}
+
+export async function getSecInstitutionalHoldings(
+  input: InstitutionalHoldingsInput,
+): Promise<SecInstitutionalHoldingsResponse> {
+  return parseInstitutionalHoldingsResponse(
+    await requestJson(buildInstitutionalHoldingsPath(input)),
   );
 }

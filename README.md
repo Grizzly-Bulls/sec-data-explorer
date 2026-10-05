@@ -2,7 +2,7 @@
 
 SEC Data Explorer is an open-source Next.js reference application for the [Grizzly Bulls SEC Data API](https://grizzlybulls.com/sec-api).
 
-It shows how to build server-side applications against retained SEC filing data and canonical company financials without operating an EDGAR ingestion, normalization, evidence-retention, or API-serving stack yourself.
+It shows how to build server-side applications against retained SEC filing data, canonical company financials, and reviewed ownership surfaces without operating an EDGAR ingestion, normalization, evidence-retention, or API-serving stack yourself.
 
 The application uses the same public API contract available to any developer. It does not import private Grizzly Bulls code, connect to Grizzly Bulls databases, scrape SEC.gov, or maintain a second SEC-data source of truth.
 
@@ -19,10 +19,13 @@ The application uses the same public API contract available to any developer. It
 - canonical company financials by reviewed SEC issuer CIK;
 - annual, quarterly, TTM, and exact canonical metric filtering;
 - optional source-available-as-of reconstruction with conservative filing availability;
-- reported facts with filing/XBRL/evidence/revision lineage kept separate from derived metrics with explicit methodology inputs; and
+- reported facts with filing/XBRL/evidence/revision lineage kept separate from derived metrics with explicit methodology inputs;
+- commercially admitted current Section 16-derived ownership positions;
+- separately modeled commercially admitted Schedule 13 beneficial aggregates;
+- source-faithful exact-filing 13F-HR / 13F-HR/A holdings with pagination; and
 - explicit request-time semantics showing that application requests are served from retained state rather than proxied to SEC.gov.
 
-The broader public SEC API also exposes commercially admitted ownership and source-faithful exact-filing Form 13F holdings. This reference app adds those workflows incrementally rather than hiding every API capability behind one oversized interface.
+The ownership workflows intentionally stay separate. Company ownership is a reviewed current subset; exact-filing 13F rows remain filing observations rather than being silently converted into canonical company or security positions.
 
 ## Five-minute quickstart
 
@@ -63,6 +66,8 @@ Try these workflows:
 4. Open **Diffs** and compare two explicit accessions from the same supported base-form family.
 5. Open **Financials**, enter a reviewed issuer CIK, and inspect reported facts separately from derived metrics.
 6. Add an RFC 3339 **as-of timestamp** to reconstruct only observations that were source-available by that point in time.
+7. Open **Ownership** to inspect commercially admitted current Section 16-derived positions and Schedule 13 beneficial aggregates for one reviewed issuer.
+8. Open **13F holdings** from a 13F-HR filing detail, or enter an exact accession directly, to inspect source-faithful information-table rows without canonicalizing the filing observations.
 
 ## Architecture
 
@@ -71,7 +76,8 @@ The browser never receives the API key.
 ```text
 browser
   |
-  | GET /filings, /filing-diff, or /financials
+  | GET /filings, /filing-diff, /financials, /ownership,
+  |     or /institutional-holdings
   v
 Next.js server-rendered application
   |
@@ -113,6 +119,8 @@ curl --fail-with-body \
   "https://grizzlybulls.com/api/v1/sec/filing-diff?from=0000320193-25-000079&to=0000320193-26-000077"
 ```
 
+The diff surface reports section identities, added/removed/changed/unchanged status, content hashes, word counts, and count deltas. It does not automatically choose related filings or claim a line-level textual redline.
+
 ### Point-in-time company financials
 
 ```bash
@@ -124,6 +132,28 @@ curl --fail-with-body \
 
 `asOf` is a historical knowledge cutoff, not a financial period-end filter. The API conservatively requires returned observations to have been source-available by that timestamp. Reported facts retain revision/evidence lineage; derived metrics are separately identified and carry explicit inputs.
 
+### Commercially admitted company ownership
+
+```bash
+curl --fail-with-body \
+  -H "Authorization: Bearer $GRIZZLY_BULLS_API_KEY" \
+  -H "Accept: application/json" \
+  "https://grizzlybulls.com/api/v1/sec/companies/0000320193/ownership?limit=25"
+```
+
+This response can contain admitted current Section 16-derived positions and separately modeled Schedule 13 beneficial aggregates. It is not a complete beneficial-ownership register and does not include Form 13F holdings.
+
+### Exact-filing Form 13F holdings
+
+```bash
+curl --fail-with-body \
+  -H "Authorization: Bearer $GRIZZLY_BULLS_API_KEY" \
+  -H "Accept: application/json" \
+  "https://grizzlybulls.com/api/v1/sec/filings/0001067983-26-000003/institutional-holdings?limit=25&offset=0"
+```
+
+The 13F route is scoped to the exact accession. It does not merge amendments, canonicalize the observed manager, resolve reported issuer labels to companies, or treat reported CUSIP as canonical security identity.
+
 The machine-readable contract is available as [OpenAPI 3.1](https://grizzlybulls.com/api/v1/sec/openapi).
 
 ## Data interpretation
@@ -131,16 +161,19 @@ The machine-readable contract is available as [OpenAPI 3.1](https://grizzlybulls
 The reference app preserves the public API's boundaries instead of inventing friendlier-but-wrong semantics.
 
 - Observed filer metadata is not silently promoted into a different canonical company identity.
-- The company-financials route uses a reviewed canonical issuer mapping rather than filing-observed identity alone.
+- The company-financials and company-ownership routes use reviewed canonical issuer mappings rather than filing-observed identity alone.
 - Filing date, discovery time, report period, source availability, and historical knowledge time are distinct concepts.
 - An `asOf` cutoff means source-available-as-of; a period ending before the cutoff does not by itself make the observation historically knowable.
 - Reported financial facts remain distinct from Grizzly Bulls derived metrics. Derived observations are not presented as source-reported and carry explicit methodology inputs.
 - Financial values remain decimal strings so the reference app does not silently change machine precision.
+- Company ownership requires commercial admission and excludes unresolved person identity; it remains a subset rather than a complete beneficial-ownership register.
+- Section 16 current positions and Schedule 13 beneficial aggregates remain separate models even inside the company-centric ownership response.
+- Source-faithful 13F holdings are a different data product from company ownership. They remain scoped to one exact accession, with no automatic amendment merge.
+- 13F manager names, issuer labels, and CUSIPs remain filing observations and are not silently canonicalized into manager, company, or security identity.
 - Retained evidence is provenance for the API response; opening a page does not cause a request-time SEC.gov fetch.
 - Extracted section text is a normalized projection of retained filing evidence, not a replacement source document.
 - 8-K item events are deterministic filing-structure observations. The app does not rename them into inferred corporate events.
 - Filing comparisons use two explicit accessions and do not automatically link amendments or previous filings.
-- Source-faithful 13F holdings and commercially admitted company ownership are different data products and should not be collapsed into one ownership view.
 
 ## Validation
 
