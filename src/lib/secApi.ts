@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { headers } from 'next/headers';
+
 import {
   buildCompanyFinancialsPath,
   buildCompanyOwnershipPath,
@@ -15,6 +17,12 @@ import {
   type FilingSearchInput,
   type InstitutionalHoldingsInput,
 } from './secApiCore';
+import {
+  createHostedDemoRateLimiter,
+  hostedDemoModeEnabled,
+  identifyHostedDemoClient,
+  resolveSecServerCredential,
+} from './hostedDemo';
 import type {
   SecCompanyFinancialsResponse,
   SecCompanyOwnershipResponse,
@@ -36,15 +44,32 @@ export class SecApiRequestError extends Error {
   }
 }
 
+const hostedDemoRateLimiter = createHostedDemoRateLimiter();
+
 function apiKey(): string {
-  const key = process.env.GRIZZLY_BULLS_API_KEY?.trim();
-  if (!key) {
+  const credential = resolveSecServerCredential();
+  if (!credential.key) {
     throw new SecApiRequestError(
-      'The server is not configured with a Grizzly Bulls API key.',
+      credential.mode === 'hosted-demo'
+        ? 'The hosted demo credential is not configured.'
+        : 'The server is not configured with a Grizzly Bulls API key.',
       500,
     );
   }
-  return key;
+  return credential.key;
+}
+
+async function enforceHostedDemoBoundary(): Promise<void> {
+  if (!hostedDemoModeEnabled()) return;
+
+  const requestHeaders = await headers();
+  const clientId = identifyHostedDemoClient(requestHeaders);
+  if (!hostedDemoRateLimiter.consume(clientId)) {
+    throw new SecApiRequestError(
+      'The hosted demo request limit has been reached. Try again shortly.',
+      429,
+    );
+  }
 }
 
 function apiBaseUrl(): string {
@@ -63,6 +88,8 @@ function errorMessage(payload: unknown, fallback: string): string {
 }
 
 async function requestJson(path: string): Promise<unknown> {
+  await enforceHostedDemoBoundary();
+
   const response = await fetch(`${apiBaseUrl()}${path}`, {
     headers: {
       Accept: 'application/json',

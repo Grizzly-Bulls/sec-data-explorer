@@ -7,6 +7,7 @@ import './financials.css';
 import './ownership.css';
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://sec-demo.grizzlybulls.com'),
   title: {
     default: 'SEC Data Explorer',
     template: '%s · SEC Data Explorer',
