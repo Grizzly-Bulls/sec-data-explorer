@@ -118,6 +118,13 @@ export default async function FinancialsPage({ searchParams }: { searchParams: P
         </div>
       </form>
 
+      {submitted && !cik ? (
+        <section className="error-panel" role="alert">
+          <strong>Issuer CIK required</strong>
+          <p>Enter the reviewed SEC issuer CIK you want to query. Period, metric, and as-of controls only narrow a company-financials request; they do not identify the company themselves.</p>
+        </section>
+      ) : null}
+
       {!validCik ? (
         <section className="error-panel" role="alert">
           <strong>Invalid issuer CIK</strong>
