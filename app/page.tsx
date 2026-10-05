@@ -3,15 +3,15 @@ import Link from 'next/link';
 const capabilities = [
   {
     eyebrow: 'Available now',
-    title: 'Find retained SEC filings',
-    body: 'Search by exact form type, observed filer CIK, and filing-date window, then open the exact accession returned by the API.',
+    title: 'Find and inspect retained filings',
+    body: 'Search retained SEC filings, open exact accessions, read normalized 10-K/10-Q/8-K sections, and inspect deterministic filing structure.',
     href: '/filings',
-    cta: 'Search filings',
+    cta: 'Explore filings',
   },
   {
     eyebrow: 'Available now',
-    title: 'Inspect and compare filing sections',
-    body: 'Read normalized 10-K, 10-Q, and 8-K sections, inspect deterministic 8-K item events, and compare two explicit accessions section by section.',
+    title: 'Compare what changed',
+    body: 'Compare two explicit 10-K, 10-Q, or 8-K accessions section by section without automatic amendment matching or a fabricated redline.',
     href: '/filing-diff',
     cta: 'Compare filings',
   },
@@ -21,6 +21,13 @@ const capabilities = [
     body: 'Query canonical company financials in current-selection or source-available-as-of mode, while keeping reported facts and explicitly derived metrics separate.',
     href: '/financials',
     cta: 'Explore financials',
+  },
+  {
+    eyebrow: 'Available now',
+    title: 'Keep ownership models honest',
+    body: 'Explore reviewed company ownership separately from exact-filing Form 13F holdings so filing observations are not silently promoted into canonical positions.',
+    href: '/ownership',
+    cta: 'Explore ownership',
   },
 ];
 
@@ -37,22 +44,21 @@ export default function Home() {
             </p>
             <div className="button-row">
               <Link className="button primary" href="/filings">Explore filings</Link>
-              <Link className="button secondary" href="/financials">Point-in-time financials</Link>
+              <Link className="button secondary" href="/ownership">Ownership workflows</Link>
               <a className="button secondary" href="https://github.com/Grizzly-Bulls/sec-data-explorer">View source</a>
             </div>
           </div>
-          <div className="terminal-card" aria-label="Example SEC API request">
+          <div className="terminal-card" aria-label="Example SEC ownership API requests">
             <div className="terminal-bar"><span></span><span></span><span></span></div>
-            <pre><code>{`GET /api/v1/sec/companies/0000320193/financials
-  ?period=quarterly
-  &asOf=2025-03-31T23:59:59Z
+            <pre><code>{`GET /api/v1/sec/companies/0000320193/ownership
+→ admitted current company ownership
+→ 13F explicitly excluded
 
-Authorization: Bearer <server-key>
+GET /api/v1/sec/filings/{accession}/institutional-holdings
+→ exact-filing 13F rows
+→ no company/security resolution
 
-→ canonical issuer identity
-→ source-available observations
-→ reported vs derived kept separate
-→ no request-time SEC fetch`}</code></pre>
+Authorization: Bearer <server-key>`}</code></pre>
           </div>
         </div>
       </section>
@@ -63,7 +69,7 @@ Authorization: Bearer <server-key>
           <h2>Start from a real developer job.</h2>
           <p>The app stays intentionally narrower than the machine API so each screen remains easy to read, copy, and adapt.</p>
         </div>
-        <div className="card-grid">
+        <div className="card-grid capability-grid">
           {capabilities.map((capability) => (
             <article className="feature-card" key={capability.title}>
               <p className="card-eyebrow">{capability.eyebrow}</p>

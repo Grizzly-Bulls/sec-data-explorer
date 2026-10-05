@@ -7,6 +7,8 @@ const core = readFileSync(new URL('../src/lib/secApiCore.ts', import.meta.url), 
 const sectionsPage = readFileSync(new URL('../app/filings/[accessionNumber]/sections/page.tsx', import.meta.url), 'utf8');
 const diffPage = readFileSync(new URL('../app/filing-diff/page.tsx', import.meta.url), 'utf8');
 const financialsPage = readFileSync(new URL('../app/financials/page.tsx', import.meta.url), 'utf8');
+const ownershipPage = readFileSync(new URL('../app/ownership/page.tsx', import.meta.url), 'utf8');
+const holdingsPage = readFileSync(new URL('../app/institutional-holdings/page.tsx', import.meta.url), 'utf8');
 const envExample = readFileSync(new URL('../.env.example', import.meta.url), 'utf8');
 const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { scripts: Record<string, string> };
 
@@ -44,6 +46,20 @@ test('point-in-time financials preserve source availability and fact-class bound
   assert.match(financialsPage, /explicit derivation inputs/i);
   assert.doesNotMatch(financialsPage, /fetch\(/);
   assert.doesNotMatch(financialsPage, /Number\(.*\.value/);
+});
+
+test('company ownership and exact-filing 13F remain separate public workflows', () => {
+  assert.match(client, /getSecCompanyOwnership/);
+  assert.match(client, /getSecInstitutionalHoldings/);
+  assert.match(core, /buildCompanyOwnershipPath/);
+  assert.match(core, /buildInstitutionalHoldingsPath/);
+  assert.match(ownershipPage, /Reviewed subset, not a complete beneficial-ownership register/);
+  assert.match(ownershipPage, /Form 13F holdings are explicitly not included here/);
+  assert.match(holdingsPage, /No automatic amendment merge/);
+  assert.match(holdingsPage, /CUSIP is not promoted into canonical security identity/);
+  assert.doesNotMatch(ownershipPage, /institutionalHoldingsIncluded \? 'yes' : 'no'.*yes/);
+  assert.doesNotMatch(ownershipPage, /fetch\(/);
+  assert.doesNotMatch(holdingsPage, /fetch\(/);
 });
 
 test('one check command covers lint, types, tests, and production build', () => {

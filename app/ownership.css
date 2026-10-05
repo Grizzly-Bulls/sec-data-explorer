@@ -1,0 +1,104 @@
+.capability-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.single-field-grid { grid-template-columns: minmax(0, 560px); }
+
+.ownership-boundary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.ownership-boundary article,
+.ownership-card,
+.holding-row,
+.ownership-semantics article {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.ownership-boundary article { padding: 22px; }
+.ownership-boundary p:not(.card-eyebrow) { color: var(--muted); }
+.ownership-warning { border-color: #d9c38a; background: #fffaf0; }
+
+.ownership-semantics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.ownership-semantics article { display: grid; gap: 5px; padding: 18px; }
+.ownership-semantics strong { overflow-wrap: anywhere; font-size: 14px; }
+.ownership-semantics span { color: var(--muted); font-size: 12px; }
+
+.ownership-list,
+.holdings-list,
+.source-list { display: grid; gap: 14px; }
+.ownership-card { padding: 22px; }
+.beneficial-card { border-left: 4px solid #8a6cc7; }
+.ownership-card-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-start;
+}
+.ownership-card-heading p { margin: 5px 0 0; color: var(--muted); }
+.ownership-kind {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.ownership-value { display: grid; justify-items: end; gap: 2px; text-align: right; }
+.ownership-value code { color: var(--ink); font-size: 20px; font-weight: 800; }
+.ownership-value span { color: var(--muted); font-size: 12px; }
+.ownership-data-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 13px 20px;
+  margin: 20px 0 0;
+}
+.ownership-data-grid div { display: grid; gap: 2px; min-width: 0; }
+.ownership-data-grid dt { font-size: 11px; }
+.ownership-data-grid dd { margin: 0; font-size: 13px; overflow-wrap: anywhere; }
+.ownership-details { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+.ownership-details summary { width: fit-content; color: var(--accent); font-weight: 750; cursor: pointer; }
+.source-list { margin-top: 16px; }
+.source-list article { display: grid; gap: 3px; padding: 12px 14px; background: var(--soft); border-radius: 9px; }
+.source-list span,
+.source-list small { color: var(--muted); overflow-wrap: anywhere; }
+
+.holding-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.1fr) minmax(310px, 1fr) minmax(180px, .55fr);
+  gap: 22px;
+  padding: 20px 22px;
+  align-items: start;
+}
+.holding-identity { display: flex; gap: 12px; min-width: 0; }
+.holding-identity h3 { margin-bottom: 3px; }
+.holding-identity p { margin: 0 0 5px; color: var(--muted); }
+.holding-identity code { color: var(--muted); font-size: 12px; }
+.source-ordinal { flex: 0 0 auto; color: var(--muted); font-size: 12px; font-weight: 800; }
+.holding-data,
+.vote-data { display: grid; gap: 9px; margin: 0; }
+.holding-data div,
+.vote-data div { display: grid; grid-template-columns: 110px 1fr; gap: 10px; }
+.holding-data dt,
+.vote-data dt { font-size: 11px; }
+.holding-data dd,
+.vote-data dd { margin: 0; font-size: 13px; overflow-wrap: anywhere; }
+
+@media (max-width: 900px) {
+  .ownership-semantics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ownership-data-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .holding-row { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 620px) {
+  .capability-grid,
+  .ownership-boundary,
+  .ownership-semantics,
+  .ownership-data-grid { grid-template-columns: 1fr; }
+  .ownership-card-heading { flex-direction: column; }
+  .ownership-value { justify-items: start; text-align: left; }
+}
