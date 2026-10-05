@@ -29,9 +29,11 @@ Treat the public API response as authoritative.
 - Financial `asOf` is a source-availability cutoff. Do not treat period end, filing date, acquisition time, or computation time as interchangeable with historical knowability.
 - Financial values are decimal strings in the machine contract. Do not coerce them through JavaScript `number` merely for display formatting.
 - Reported facts and derived metrics are different fact classes. Never present a derived metric as source-reported; preserve methodology IDs and explicit input lineage.
+- Reported fact revision chains, evidence IDs, XBRL concepts, source locators, and `availableAt` fields are meaningful provenance. Do not discard them when the UI summarizes a fact.
 - Company ownership is a commercially admitted subset, not a complete beneficial-ownership register. Preserve the separate Section 16 current-position and Schedule 13 beneficial-aggregate models.
 - Form 13F holdings are exact-accession filing observations. Do not merge amendments, canonicalize manager identity, resolve reported issuer labels to companies, or promote CUSIP into canonical security identity inside this app.
-- Reported 13F values and amounts are decimal strings. Preserve their reported units and voting/discretion fields.
+- Reported 13F values and amounts are decimal strings. Preserve their reported units, put/call state, investment discretion, other-manager field, and voting-authority fields.
+- Source-faithful Form 13F rows and commercially admitted company ownership are different products and must not be merged into one invented ownership model.
 - Retained evidence and provenance should be visible when useful; do not imply that the app fetched SEC.gov at request time.
 - Extracted section text is a normalized projection of retained filing evidence. Do not present it as the original source document.
 - 8-K item events are deterministic filing-structure observations with `semanticInference: false`. Do not rename them into inferred mergers, financings, executive changes, or other corporate-event labels.
