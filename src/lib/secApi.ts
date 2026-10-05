@@ -1,15 +1,18 @@
 import 'server-only';
 
 import {
+  buildCompanyFinancialsPath,
   buildFilingDiffPath,
   buildFilingSearchPath,
   buildFilingSectionPath,
   buildFilingSectionsPath,
   DEFAULT_SEC_API_BASE_URL,
   normalizeApiBaseUrl,
+  type CompanyFinancialsInput,
   type FilingSearchInput,
 } from './secApiCore';
 import type {
+  SecCompanyFinancialsResponse,
   SecFilingDiffResponse,
   SecFilingResponse,
   SecFilingSearchResponse,
@@ -146,6 +149,22 @@ function parseDiffResponse(payload: unknown): SecFilingDiffResponse {
   return payload as unknown as SecFilingDiffResponse;
 }
 
+function parseCompanyFinancialsResponse(payload: unknown): SecCompanyFinancialsResponse {
+  if (
+    !isRecord(payload) ||
+    !isRecord(payload.data) ||
+    !isRecord(payload.data.company) ||
+    !Array.isArray(payload.data.reportedFacts) ||
+    !Array.isArray(payload.data.derivedMetrics) ||
+    !isRecord(payload.meta) ||
+    !isRecord(payload.meta.query) ||
+    !isRecord(payload.meta.semantics)
+  ) {
+    throw new SecApiRequestError('The SEC API returned an unexpected company-financials response.', 502);
+  }
+  return payload as unknown as SecCompanyFinancialsResponse;
+}
+
 export async function searchSecFilings(
   input: FilingSearchInput,
 ): Promise<SecFilingSearchResponse> {
@@ -179,5 +198,13 @@ export async function diffSecFilings(
 ): Promise<SecFilingDiffResponse> {
   return parseDiffResponse(
     await requestJson(buildFilingDiffPath(fromAccessionNumber, toAccessionNumber)),
+  );
+}
+
+export async function getSecCompanyFinancials(
+  input: CompanyFinancialsInput,
+): Promise<SecCompanyFinancialsResponse> {
+  return parseCompanyFinancialsResponse(
+    await requestJson(buildCompanyFinancialsPath(input)),
   );
 }

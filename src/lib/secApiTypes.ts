@@ -164,3 +164,123 @@ export interface SecFilingDiffResponse {
   data: { diff: SecFilingDiff };
   meta: SecFilingIntelligenceMeta;
 }
+
+export type SecFinancialPeriodScope = 'all' | 'annual' | 'quarterly' | 'ttm';
+export type SecFinancialStatement = 'income-statement' | 'cash-flow' | 'balance-sheet' | 'capital-returns';
+export type SecFinancialFactKind = 'duration' | 'instant';
+export type SecFinancialPeriodKind = 'fiscal-year' | 'fiscal-quarter' | 'fiscal-ytd' | 'instant';
+
+export interface SecFinancialReportedFact {
+  factId: string;
+  seriesKey: string;
+  companyId: string;
+  secIssuerCik: string;
+  metricKey: string;
+  statement: SecFinancialStatement;
+  factKind: SecFinancialFactKind;
+  value: string;
+  unit: string;
+  currency: string | null;
+  period: {
+    periodId: string;
+    kind: SecFinancialPeriodKind;
+    startDate: string | null;
+    endDate: string;
+    fiscalYearLabel: string | null;
+    fiscalPeriodLabel: string | null;
+  };
+  filing: {
+    accession: string;
+    form: string;
+    filedAt: string;
+    availableAt: string;
+    filingFiscalYear: number | null;
+    frame: string | null;
+  };
+  xbrl: {
+    concept: string;
+    sourceFactLocator: string;
+  };
+  evidence: {
+    evidenceId: string;
+    sourceId: string;
+    sourceRecordId: string;
+    contentSha256: string | null;
+    acquiredAt: string;
+    sourcePublishedAt: string | null;
+    rightsProfileId: string;
+  };
+  revision: {
+    number: number;
+    supersedesFactId: string | null;
+    currentlySelected: boolean;
+    currentState: 'active' | 'superseded';
+  };
+  directMethod: string;
+}
+
+export interface SecFinancialDerivedInput {
+  inputRecordId: string;
+  ordinal: number;
+  role: string;
+  sourceFactLocator: string;
+  evidenceId: string;
+  value: string | null;
+  unit: string | null;
+  concept: string | null;
+  periodStart: string | null;
+  periodEnd: string | null;
+  filedAt: string | null;
+  form: string | null;
+}
+
+export interface SecFinancialDerivedMetric {
+  metricObservationId: string;
+  companyId: string;
+  metricKey: string;
+  value: string;
+  unit: string;
+  asOfDate: string;
+  availableAt: string;
+  computedAt: string;
+  methodology: {
+    id: string;
+    version: string;
+  };
+  rightsProfileId: string;
+  currentlySelected: boolean;
+  inputs: SecFinancialDerivedInput[];
+}
+
+export interface SecCompanyFinancialsResponse {
+  data: {
+    company: {
+      companyId: string;
+      secIssuerCik: string;
+    };
+    reportedFacts: SecFinancialReportedFact[];
+    derivedMetrics: SecFinancialDerivedMetric[];
+  };
+  meta: {
+    apiVersion: string;
+    sourceAuthority: string;
+    retrievedAt: string;
+    query: {
+      secIssuerCik: string;
+      periodScope: SecFinancialPeriodScope;
+      metricKey: string | null;
+      asOf: string | null;
+      limit: number;
+    };
+    semantics: {
+      requestTimeSecFetch: boolean;
+      canonicalCompanyIdentity: boolean;
+      valuesAreDecimalStrings: boolean;
+      pointInTimeMode: 'current-selection' | 'source-available-as-of';
+      conservativeFilingAvailability: boolean;
+      reportedFactRevisionChains: boolean;
+      derivedMetricsAreSourceReported: boolean;
+      derivedMetricsCarryExplicitInputs: boolean;
+    };
+  };
+}
