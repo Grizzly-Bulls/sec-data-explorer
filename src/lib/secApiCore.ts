@@ -20,6 +20,17 @@ export interface CompanyFinancialsInput {
   limit?: number;
 }
 
+export interface CompanyOwnershipInput {
+  cik: string;
+  limit?: number;
+}
+
+export interface InstitutionalHoldingsInput {
+  accessionNumber: string;
+  limit?: number;
+  offset?: number;
+}
+
 export const ACCESSION_NUMBER_PATTERN = /^[0-9]{10}-[0-9]{2}-[0-9]{6}$/;
 export const SECTION_KEY_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const SEC_ISSUER_CIK_PATTERN = /^[0-9]{1,10}$/;
@@ -41,6 +52,10 @@ export function isValidSectionKey(value: string): boolean {
 
 export function supportsFilingIntelligence(formType: string): boolean {
   return /^(?:10-K|10-Q|8-K)(?:\/A)?$/i.test(formType.trim());
+}
+
+export function supportsInstitutionalHoldings(formType: string): boolean {
+  return /^13F-HR(?:\/A)?$/i.test(formType.trim());
 }
 
 export function isValidSecIssuerCik(value: string): boolean {
@@ -102,6 +117,19 @@ export function buildCompanyFinancialsPath(input: CompanyFinancialsInput): strin
   return `/companies/${encodeURIComponent(input.cik.trim())}/financials?${params.toString()}`;
 }
 
+export function buildCompanyOwnershipPath(input: CompanyOwnershipInput): string {
+  const params = new URLSearchParams();
+  params.set('limit', String(input.limit ?? SEC_EXPLORER_PAGE_SIZE));
+  return `/companies/${encodeURIComponent(input.cik.trim())}/ownership?${params.toString()}`;
+}
+
+export function buildInstitutionalHoldingsPath(input: InstitutionalHoldingsInput): string {
+  const params = new URLSearchParams();
+  params.set('limit', String(input.limit ?? SEC_EXPLORER_PAGE_SIZE));
+  params.set('offset', String(input.offset ?? 0));
+  return `/filings/${encodeURIComponent(input.accessionNumber.trim())}/institutional-holdings?${params.toString()}`;
+}
+
 export function buildExplorerSearchHref(input: FilingSearchInput): string {
   const params = new URLSearchParams();
   if (input.form?.trim()) params.set('form', input.form.trim());
@@ -132,4 +160,22 @@ export function buildExplorerFinancialsHref(input: Partial<CompanyFinancialsInpu
   if (input.asOf?.trim()) params.set('asOf', input.asOf.trim());
   const query = params.toString();
   return query ? `/financials?${query}` : '/financials';
+}
+
+export function buildExplorerOwnershipHref(cik?: string): string {
+  const params = new URLSearchParams();
+  if (cik?.trim()) params.set('cik', cik.trim());
+  const query = params.toString();
+  return query ? `/ownership?${query}` : '/ownership';
+}
+
+export function buildExplorerInstitutionalHoldingsHref(
+  accessionNumber?: string,
+  offset = 0,
+): string {
+  const params = new URLSearchParams();
+  if (accessionNumber?.trim()) params.set('accession', accessionNumber.trim());
+  if (offset > 0) params.set('offset', String(offset));
+  const query = params.toString();
+  return query ? `/institutional-holdings?${query}` : '/institutional-holdings';
 }

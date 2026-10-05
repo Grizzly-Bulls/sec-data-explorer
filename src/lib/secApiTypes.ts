@@ -284,3 +284,203 @@ export interface SecCompanyFinancialsResponse {
     };
   };
 }
+
+export interface SecOwnershipSource {
+  sourceId: string;
+  canonicalSourceId: string;
+  publisher: string;
+  title: string;
+  locator: {
+    kind: 'sec-accession' | 'url' | 'unavailable';
+    value: string | null;
+  };
+  publishedAt: string | null;
+}
+
+export interface SecCompanyOwnershipPosition {
+  owner: {
+    personId: string;
+    name: string;
+    reportingOwnerCik: string;
+  };
+  company: {
+    companyId: string;
+    name: string;
+    secIssuerCik: string;
+  };
+  security: {
+    legalSecurityId: string;
+    name: string;
+    instrumentFamily: string;
+    ticker: string | null;
+    exchange: string | null;
+  };
+  position: {
+    ownershipKind: string;
+    relationshipState: string;
+    currentBasisUnits: string;
+    reportedUnits: string | null;
+    reportedAsOfDate: string;
+    valuationAsOfDate: string;
+    currentValueUsd: number | null;
+  };
+  filing: {
+    accessionNumber: string;
+    form: string;
+    filingDate: string;
+    effectiveDate: string;
+  };
+  version: {
+    versionId: string;
+    knowledgeRecordedAt: string;
+    knowledgeValidFrom: string;
+    knowledgeValidThrough: string | null;
+  };
+  sources: SecOwnershipSource[];
+}
+
+export interface SecCompanyBeneficialOwnershipPosition {
+  owner: {
+    personId: string;
+    name: string;
+  };
+  company: {
+    companyId: string;
+    name: string;
+    secIssuerCik: string;
+  };
+  security: {
+    legalSecurityId: string;
+    name: string;
+    securityType: string;
+    ticker: string | null;
+    exchange: string | null;
+  };
+  position: {
+    ownershipKind: 'beneficial-aggregate';
+    relationshipState: string;
+    reportedShares: string;
+    reportedAsOfDate: string;
+    valuationTreatment: string;
+  };
+  materialContinuity: {
+    methodologyVersion: 'schedule13-material-continuity-v1';
+    throughDate: string;
+    exactShareCountReobserved: false;
+  };
+  filing: {
+    accessionNumber: string;
+  };
+  version: {
+    versionId: string;
+    knowledgeRecordedAt: string;
+    knowledgeValidFrom: string;
+    knowledgeValidThrough: string | null;
+  };
+  sources: SecOwnershipSource[];
+}
+
+export interface SecCompanyOwnershipResponse {
+  data: {
+    company: {
+      companyId: string;
+      name: string;
+      secIssuerCik: string;
+    };
+    positions: SecCompanyOwnershipPosition[];
+    beneficialOwnershipPositions: SecCompanyBeneficialOwnershipPosition[];
+  };
+  pagination: {
+    limit: number;
+    returned: number;
+    total: number;
+    hasMore: boolean;
+  };
+  beneficialOwnershipPagination: {
+    limit: number;
+    returned: number;
+    total: number;
+    hasMore: boolean;
+  };
+  meta: {
+    apiVersion: string;
+    sourceAuthority: string;
+    knowledgeAsOf: string;
+    effectiveAsOf: string | null;
+    payloadSha256: string;
+    coverage: {
+      section16CurrentDisclosedPositions: 'commercially-admitted-subset';
+      schedule13BeneficialOwnership: 'commercially-admitted-subset';
+      institutional13fHoldings: 'unsupported';
+    };
+    semantics: {
+      requestTimeSecFetch: boolean;
+      commercialAdmissionRequired: boolean;
+      unresolvedPersonIdentityExcluded: boolean;
+      currentPositionsOnly: boolean;
+      completeBeneficialOwnership: boolean;
+      schedule13Included: boolean;
+      institutionalHoldingsIncluded: boolean;
+    };
+  };
+}
+
+export interface SecInstitutionalHolding13f {
+  sourceOrdinal: number;
+  nameOfIssuer: string;
+  titleOfClass: string;
+  cusip: string;
+  reportedValueThousandsUsd: string;
+  reportedAmount: string;
+  reportedAmountType: 'SH' | 'PRN';
+  putCall: 'PUT' | 'CALL' | null;
+  investmentDiscretion: string;
+  otherManager: string | null;
+  votingAuthority: {
+    sole: string;
+    shared: string;
+    none: string;
+  };
+}
+
+export interface SecInstitutionalHoldingsResponse {
+  data: {
+    filing: {
+      accessionNumber: string;
+      formType: '13F-HR' | '13F-HR/A';
+      filingDate: string;
+      reportPeriod: string;
+      manager: {
+        observedCik: string;
+        observedName: string;
+        identityAuthority: 'sec-filing-header-observation';
+      };
+    };
+    holdings: SecInstitutionalHolding13f[];
+  };
+  pagination: {
+    limit: number;
+    offset: number;
+    returned: number;
+    total: number;
+    hasMore: boolean;
+    nextOffset: number | null;
+  };
+  meta: {
+    apiVersion: string;
+    sourceAuthority: string;
+    retrievedAt: string;
+    sourceContentSha256: string;
+    holdingsContentSha256: string;
+    semantics: {
+      requestTimeSecFetch: boolean;
+      exactAccessionScoped: boolean;
+      automaticAmendmentMerge: boolean;
+      managerIdentityCanonicalized: boolean;
+      issuerNamesAreReportedLabels: boolean;
+      cusipIsCanonicalSecurityIdentity: boolean;
+      companyResolutionApplied: boolean;
+      reportedValueUnit: 'thousands-usd';
+    };
+  };
+}
