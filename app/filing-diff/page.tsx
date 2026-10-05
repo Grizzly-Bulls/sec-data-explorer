@@ -42,6 +42,7 @@ export default async function FilingDiffPage({ searchParams }: { searchParams: P
   }
 
   const diff = response?.data.diff;
+  const meta = response?.meta;
 
   return (
     <div className="shell page-stack">
@@ -91,7 +92,7 @@ export default async function FilingDiffPage({ searchParams }: { searchParams: P
         </section>
       ) : null}
 
-      {diff ? (
+      {diff && meta ? (
         <>
           <section className="detail-hero compact-hero">
             <div className="filing-topline">
@@ -142,8 +143,8 @@ export default async function FilingDiffPage({ searchParams }: { searchParams: P
           </section>
 
           <section className="response-strip">
-            <span>API version <strong>{response.meta.apiVersion}</strong></span>
-            <span>Authority <strong>{response.meta.sourceAuthority}</strong></span>
+            <span>API version <strong>{meta.apiVersion}</strong></span>
+            <span>Authority <strong>{meta.sourceAuthority}</strong></span>
             <span>Explicit accessions <strong>{diff.semantics.comparedExplicitAccessions ? 'yes' : 'no'}</strong></span>
           </section>
         </>
