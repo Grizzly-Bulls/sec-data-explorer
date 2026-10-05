@@ -55,9 +55,11 @@ test('company ownership and exact-filing 13F remain separate public workflows', 
   assert.match(core, /buildInstitutionalHoldingsPath/);
   assert.match(ownershipPage, /Reviewed subset, not a complete beneficial-ownership register/);
   assert.match(ownershipPage, /Form 13F holdings are explicitly not included here/);
+  assert.match(ownershipPage, /institutionalHoldingsIncluded/);
+  assert.match(ownershipPage, /13F included here/);
   assert.match(holdingsPage, /No automatic amendment merge/);
   assert.match(holdingsPage, /CUSIP is not promoted into canonical security identity/);
-  assert.doesNotMatch(ownershipPage, /institutionalHoldingsIncluded \? 'yes' : 'no'.*yes/);
+  assert.match(holdingsPage, /Other manager/);
   assert.doesNotMatch(ownershipPage, /fetch\(/);
   assert.doesNotMatch(holdingsPage, /fetch\(/);
 });
