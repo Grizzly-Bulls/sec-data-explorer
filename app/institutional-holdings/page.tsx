@@ -49,6 +49,8 @@ export default async function InstitutionalHoldingsPage({ searchParams }: { sear
   const holdings = response?.data.holdings || [];
   const pagination = response?.pagination;
   const meta = response?.meta;
+  const firstReturnedRow = pagination && pagination.returned > 0 ? pagination.offset + 1 : 0;
+  const lastReturnedRow = pagination ? pagination.offset + pagination.returned : 0;
 
   return (
     <div className="shell page-stack">
@@ -140,7 +142,7 @@ export default async function InstitutionalHoldingsPage({ searchParams }: { sear
                 <p className="eyebrow">Information-table rows</p>
                 <h2>{pagination.total} reported holding{pagination.total === 1 ? '' : 's'}</h2>
               </div>
-              <span className="response-meta">Showing {pagination.offset + 1}–{pagination.offset + pagination.returned}<br />Values reported in thousands USD</span>
+              <span className="response-meta">Showing {firstReturnedRow}–{lastReturnedRow}<br />Values reported in thousands USD</span>
             </div>
 
             {holdings.length > 0 ? (
@@ -160,6 +162,7 @@ export default async function InstitutionalHoldingsPage({ searchParams }: { sear
                       <div><dt>Reported amount</dt><dd><code>{holding.reportedAmount}</code> {holding.reportedAmountType}</dd></div>
                       <div><dt>Put / call</dt><dd>{display(holding.putCall)}</dd></div>
                       <div><dt>Discretion</dt><dd>{holding.investmentDiscretion}</dd></div>
+                      <div><dt>Other manager</dt><dd>{display(holding.otherManager)}</dd></div>
                     </dl>
                     <dl className="vote-data">
                       <div><dt>Sole</dt><dd>{holding.votingAuthority.sole}</dd></div>
