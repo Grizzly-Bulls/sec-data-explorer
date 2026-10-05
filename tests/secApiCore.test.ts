@@ -2,14 +2,20 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  buildCompanyFinancialsPath,
   buildExplorerFilingDiffHref,
+  buildExplorerFinancialsHref,
   buildExplorerSearchHref,
   buildFilingDiffPath,
   buildFilingSearchPath,
   buildFilingSectionPath,
   buildFilingSectionsPath,
   isValidAccessionNumber,
+  isValidAsOfTimestamp,
+  isValidFinancialMetricKey,
+  isValidFinancialPeriodScope,
   isValidSectionKey,
+  isValidSecIssuerCik,
   normalizeApiBaseUrl,
   parseNonNegativeOffset,
   supportsFilingIntelligence,
@@ -71,6 +77,36 @@ test('builds local diff links without machine credentials', () => {
   assert.equal(
     buildExplorerFilingDiffHref('0000320193-25-000079'),
     '/filing-diff?from=0000320193-25-000079',
+  );
+});
+
+test('validates point-in-time financial query inputs', () => {
+  assert.equal(isValidSecIssuerCik('0000320193'), true);
+  assert.equal(isValidSecIssuerCik('320193'), true);
+  assert.equal(isValidSecIssuerCik('0000320193x'), false);
+  assert.equal(isValidFinancialPeriodScope('quarterly'), true);
+  assert.equal(isValidFinancialPeriodScope('monthly'), false);
+  assert.equal(isValidFinancialMetricKey('Revenue'), true);
+  assert.equal(isValidFinancialMetricKey('revenue-total'), false);
+  assert.equal(isValidAsOfTimestamp('2025-03-31T23:59:59Z'), true);
+  assert.equal(isValidAsOfTimestamp('2025-03-31'), false);
+  assert.equal(isValidAsOfTimestamp('2025-03-31T23:59:59'), false);
+});
+
+test('builds canonical company-financial paths without changing the as-of timestamp', () => {
+  assert.equal(
+    buildCompanyFinancialsPath({
+      cik: '0000320193',
+      period: 'quarterly',
+      metric: 'Revenue',
+      asOf: '2025-03-31T23:59:59Z',
+      limit: 25,
+    }),
+    '/companies/0000320193/financials?period=quarterly&metric=Revenue&asOf=2025-03-31T23%3A59%3A59Z&limit=25',
+  );
+  assert.equal(
+    buildExplorerFinancialsHref({ cik: '0000320193', period: 'annual', metric: 'Revenue' }),
+    '/financials?cik=0000320193&period=annual&metric=Revenue',
   );
 });
 

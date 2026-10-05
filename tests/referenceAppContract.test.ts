@@ -6,6 +6,7 @@ const client = readFileSync(new URL('../src/lib/secApi.ts', import.meta.url), 'u
 const core = readFileSync(new URL('../src/lib/secApiCore.ts', import.meta.url), 'utf8');
 const sectionsPage = readFileSync(new URL('../app/filings/[accessionNumber]/sections/page.tsx', import.meta.url), 'utf8');
 const diffPage = readFileSync(new URL('../app/filing-diff/page.tsx', import.meta.url), 'utf8');
+const financialsPage = readFileSync(new URL('../app/financials/page.tsx', import.meta.url), 'utf8');
 const envExample = readFileSync(new URL('../.env.example', import.meta.url), 'utf8');
 const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { scripts: Record<string, string> };
 
@@ -32,6 +33,17 @@ test('filing intelligence stays on reviewed public routes and explicit identitie
   assert.match(diffPage, /does not fabricate a line-by-line redline/);
   assert.doesNotMatch(sectionsPage, /fetch\(/);
   assert.doesNotMatch(diffPage, /fetch\(/);
+});
+
+test('point-in-time financials preserve source availability and fact-class boundaries', () => {
+  assert.match(client, /getSecCompanyFinancials/);
+  assert.match(core, /buildCompanyFinancialsPath/);
+  assert.match(financialsPage, /source-available-as-of/i);
+  assert.match(financialsPage, /conservative filing-availability/i);
+  assert.match(financialsPage, /derived metrics source-reported/i);
+  assert.match(financialsPage, /explicit derivation inputs/i);
+  assert.doesNotMatch(financialsPage, /fetch\(/);
+  assert.doesNotMatch(financialsPage, /Number\(.*\.value/);
 });
 
 test('one check command covers lint, types, tests, and production build', () => {

@@ -16,11 +16,11 @@ const capabilities = [
     cta: 'Compare filings',
   },
   {
-    eyebrow: 'Public API capability',
+    eyebrow: 'Available now',
     title: 'Reconstruct what was knowable',
-    body: 'Point-in-time company financials can use an as-of timestamp so later source observations do not silently leak into historical analysis.',
-    href: 'https://grizzlybulls.com/sec-api',
-    cta: 'Explore the API',
+    body: 'Query canonical company financials in current-selection or source-available-as-of mode, while keeping reported facts and explicitly derived metrics separate.',
+    href: '/financials',
+    cta: 'Explore financials',
   },
 ];
 
@@ -37,20 +37,21 @@ export default function Home() {
             </p>
             <div className="button-row">
               <Link className="button primary" href="/filings">Explore filings</Link>
+              <Link className="button secondary" href="/financials">Point-in-time financials</Link>
               <a className="button secondary" href="https://github.com/Grizzly-Bulls/sec-data-explorer">View source</a>
             </div>
           </div>
           <div className="terminal-card" aria-label="Example SEC API request">
             <div className="terminal-bar"><span></span><span></span><span></span></div>
-            <pre><code>{`GET /api/v1/sec/filings
-  ?form=10-K
-  &cik=0000320193
+            <pre><code>{`GET /api/v1/sec/companies/0000320193/financials
+  ?period=quarterly
+  &asOf=2025-03-31T23:59:59Z
 
 Authorization: Bearer <server-key>
 
-→ retained filing metadata
-→ exact accession identity
-→ source provenance
+→ canonical issuer identity
+→ source-available observations
+→ reported vs derived kept separate
 → no request-time SEC fetch`}</code></pre>
           </div>
         </div>
@@ -68,11 +69,7 @@ Authorization: Bearer <server-key>
               <p className="card-eyebrow">{capability.eyebrow}</p>
               <h3>{capability.title}</h3>
               <p>{capability.body}</p>
-              {capability.href.startsWith('/') ? (
-                <Link href={capability.href}>{capability.cta} →</Link>
-              ) : (
-                <a href={capability.href}>{capability.cta} →</a>
-              )}
+              <Link href={capability.href}>{capability.cta} →</Link>
             </article>
           ))}
         </div>
