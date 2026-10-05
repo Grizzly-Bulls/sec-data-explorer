@@ -9,11 +9,11 @@ const capabilities = [
     cta: 'Search filings',
   },
   {
-    eyebrow: 'Public API capability',
-    title: 'Compare what changed',
-    body: 'The SEC API exposes normalized filing sections and explicit filing-to-filing diffs without requiring a request-time SEC.gov fetch.',
-    href: 'https://grizzlybulls.com/sec-api',
-    cta: 'View API capabilities',
+    eyebrow: 'Available now',
+    title: 'Inspect and compare filing sections',
+    body: 'Read normalized 10-K, 10-Q, and 8-K sections, inspect deterministic 8-K item events, and compare two explicit accessions section by section.',
+    href: '/filing-diff',
+    cta: 'Compare filings',
   },
   {
     eyebrow: 'Public API capability',

@@ -3,6 +3,9 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 const client = readFileSync(new URL('../src/lib/secApi.ts', import.meta.url), 'utf8');
+const core = readFileSync(new URL('../src/lib/secApiCore.ts', import.meta.url), 'utf8');
+const sectionsPage = readFileSync(new URL('../app/filings/[accessionNumber]/sections/page.tsx', import.meta.url), 'utf8');
+const diffPage = readFileSync(new URL('../app/filing-diff/page.tsx', import.meta.url), 'utf8');
 const envExample = readFileSync(new URL('../.env.example', import.meta.url), 'utf8');
 const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { scripts: Record<string, string> };
 
@@ -17,6 +20,18 @@ test('the reference app points at the versioned public SEC API rather than SEC.g
   assert.doesNotMatch(client, /sec\.gov/i);
   assert.match(envExample, /GRIZZLY_BULLS_API_KEY=your_key_here/);
   assert.doesNotMatch(envExample, /NEXT_PUBLIC_/);
+});
+
+test('filing intelligence stays on reviewed public routes and explicit identities', () => {
+  assert.match(client, /getSecFilingSections/);
+  assert.match(client, /getSecFilingSection/);
+  assert.match(client, /diffSecFilings/);
+  assert.match(core, /buildFilingDiffPath/);
+  assert.match(sectionsPage, /event\.semanticInference/);
+  assert.match(diffPage, /does not choose a previous filing automatically/);
+  assert.match(diffPage, /does not fabricate a line-by-line redline/);
+  assert.doesNotMatch(sectionsPage, /fetch\(/);
+  assert.doesNotMatch(diffPage, /fetch\(/);
 });
 
 test('one check command covers lint, types, tests, and production build', () => {

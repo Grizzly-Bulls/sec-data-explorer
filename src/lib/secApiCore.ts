@@ -11,6 +11,7 @@ export interface FilingSearchInput {
 }
 
 export const ACCESSION_NUMBER_PATTERN = /^[0-9]{10}-[0-9]{2}-[0-9]{6}$/;
+export const SECTION_KEY_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export function normalizeApiBaseUrl(value: string | undefined): string {
   const candidate = value?.trim() || DEFAULT_SEC_API_BASE_URL;
@@ -19,6 +20,14 @@ export function normalizeApiBaseUrl(value: string | undefined): string {
 
 export function isValidAccessionNumber(value: string): boolean {
   return ACCESSION_NUMBER_PATTERN.test(value);
+}
+
+export function isValidSectionKey(value: string): boolean {
+  return value.length > 0 && value.length <= 80 && SECTION_KEY_PATTERN.test(value);
+}
+
+export function supportsFilingIntelligence(formType: string): boolean {
+  return /^(?:10-K|10-Q|8-K)(?:\/A)?$/i.test(formType.trim());
 }
 
 export function parseNonNegativeOffset(value: string | undefined): number {
@@ -38,6 +47,22 @@ export function buildFilingSearchPath(input: FilingSearchInput): string {
   return `/filings?${params.toString()}`;
 }
 
+export function buildFilingSectionsPath(accessionNumber: string): string {
+  return `/filings/${encodeURIComponent(accessionNumber)}/sections`;
+}
+
+export function buildFilingSectionPath(accessionNumber: string, sectionKey: string): string {
+  return `${buildFilingSectionsPath(accessionNumber)}/${encodeURIComponent(sectionKey)}`;
+}
+
+export function buildFilingDiffPath(fromAccessionNumber: string, toAccessionNumber: string): string {
+  const params = new URLSearchParams({
+    from: fromAccessionNumber,
+    to: toAccessionNumber,
+  });
+  return `/filing-diff?${params.toString()}`;
+}
+
 export function buildExplorerSearchHref(input: FilingSearchInput): string {
   const params = new URLSearchParams();
   if (input.form?.trim()) params.set('form', input.form.trim());
@@ -47,4 +72,15 @@ export function buildExplorerSearchHref(input: FilingSearchInput): string {
   if ((input.offset ?? 0) > 0) params.set('offset', String(input.offset));
   const query = params.toString();
   return query ? `/filings?${query}` : '/filings';
+}
+
+export function buildExplorerFilingDiffHref(
+  fromAccessionNumber?: string,
+  toAccessionNumber?: string,
+): string {
+  const params = new URLSearchParams();
+  if (fromAccessionNumber?.trim()) params.set('from', fromAccessionNumber.trim());
+  if (toAccessionNumber?.trim()) params.set('to', toAccessionNumber.trim());
+  const query = params.toString();
+  return query ? `/filing-diff?${query}` : '/filing-diff';
 }

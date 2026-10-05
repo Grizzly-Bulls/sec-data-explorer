@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import './globals.css';
+import './intelligence.css';
 
 export const metadata: Metadata = {
   title: {
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
     template: '%s · SEC Data Explorer',
   },
   description:
-    'Open-source reference app for exploring retained SEC filings with the Grizzly Bulls SEC Data API.',
+    'Open-source reference app for exploring retained SEC filings and filing intelligence with the Grizzly Bulls SEC Data API.',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             </Link>
             <nav className="top-nav" aria-label="Primary navigation">
               <Link href="/filings">Filings</Link>
+              <Link href="/filing-diff">Diffs</Link>
               <a href="https://grizzlybulls.com/sec-api">API</a>
               <a href="https://github.com/Grizzly-Bulls/sec-data-explorer">GitHub</a>
             </nav>

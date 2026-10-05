@@ -8,7 +8,7 @@ Use only the public, versioned Grizzly Bulls SEC Data API at `https://grizzlybul
 
 Do not import private Grizzly Bulls application modules, query Grizzly Bulls databases, ingest SEC/EDGAR data directly, scrape SEC.gov, or create another source of truth.
 
-The current application may demonstrate bounded filing discovery and exact filing lookup. Add filing sections, filing diffs, financials, ownership, or institutional holdings only through their reviewed public API contracts.
+The current application may demonstrate bounded filing discovery, exact filing lookup, reviewed 10-K/10-Q/8-K section extraction, normalized section reading, deterministic 8-K item events, and explicit filing-to-filing section comparison. Add financials, ownership, or institutional holdings only through their reviewed public API contracts.
 
 ## API key boundary
 
@@ -26,6 +26,9 @@ Treat the public API response as authoritative.
 - An observed filer CIK/name is filing metadata, not permission to invent a different canonical issuer identity.
 - Filing dates, discovery timestamps, source-availability timestamps, report periods, and historical `asOf` semantics must remain distinct.
 - Retained evidence and provenance should be visible when useful; do not imply that the app fetched SEC.gov at request time.
+- Extracted section text is a normalized projection of retained filing evidence. Do not present it as the original source document.
+- 8-K item events are deterministic filing-structure observations with `semanticInference: false`. Do not rename them into inferred mergers, financings, executive changes, or other corporate-event labels.
+- Filing diffs compare two exact accessions supplied by the caller. Do not automatically select a previous filing, infer amendment linkage, or turn content-hash status into an invented line-level redline.
 - Source-faithful Form 13F rows and commercially admitted company ownership are different products and must not be merged into one invented ownership model.
 - Deterministic source facts and Grizzly Bulls derived/inferred facts must remain distinguishable when later workflows expose both.
 
@@ -51,7 +54,7 @@ Write for developers and financial-data users. Do not expose internal phase name
 Use Node.js 24 and pnpm 11. Before a pull request is ready:
 
 ```bash
-pnpm install
+pnpm install --frozen-lockfile
 pnpm check
 ```
 
