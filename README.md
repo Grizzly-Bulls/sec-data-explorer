@@ -2,26 +2,40 @@
 
 SEC Data Explorer is an open-source Next.js reference application for the [Grizzly Bulls SEC Data API](https://grizzlybulls.com/sec-api).
 
-It shows how to build server-side applications against retained SEC filings, canonical company financials, and reviewed ownership surfaces without operating an EDGAR ingestion, normalization, evidence-retention, or API-serving stack yourself.
+It shows how to build server-side applications against retained SEC filing data, canonical company financials, and reviewed ownership surfaces without operating an EDGAR ingestion, normalization, evidence-retention, or API-serving stack yourself.
 
 The application uses the same public API contract available to any developer. It does not import private Grizzly Bulls code, connect to Grizzly Bulls databases, scrape SEC.gov, or maintain a second SEC-data source of truth.
 
 ## What works today
 
-- bounded retained filing search and exact-accession lookup;
-- normalized 10-K, 10-Q, and 8-K section reading plus deterministic 8-K item events;
-- explicit filing-to-filing section comparison;
-- canonical company financials with annual, quarterly, TTM, metric, and source-available-as-of filtering;
-- reported financial facts kept separate from explicit derived metrics and their lineage;
+- bounded retained filing search by exact form type, observed filer CIK, and filing-date range;
+- offset pagination through the public filing-search contract;
+- exact accession lookup from a search result;
+- observed filer and archive metadata plus retained-evidence/provenance display;
+- extracted 10-K, 10-Q, and 8-K section manifests from retained filing evidence;
+- normalized section-text reading through stable section keys;
+- deterministic observed 8-K item events without semantic corporate-event inference;
+- explicit filing-to-filing section comparison across two supplied accessions;
+- canonical company financials by reviewed SEC issuer CIK;
+- annual, quarterly, TTM, and exact canonical metric filtering;
+- optional source-available-as-of reconstruction with conservative filing availability;
+- reported facts with filing/XBRL/evidence/revision lineage kept separate from derived metrics with explicit methodology inputs;
 - commercially admitted current Section 16-derived ownership positions;
-- separately modeled admitted Schedule 13 beneficial aggregates; and
-- source-faithful exact-filing 13F-HR / 13F-HR/A holdings with pagination.
+- separately modeled commercially admitted Schedule 13 beneficial aggregates;
+- source-faithful exact-filing 13F-HR / 13F-HR/A holdings with pagination; and
+- explicit request-time semantics showing that application requests are served from retained state rather than proxied to SEC.gov.
 
-The ownership workflows intentionally stay separate. Company ownership is a reviewed current subset; exact-filing 13F rows remain filing observations rather than being silently converted into canonical company positions.
+The ownership workflows intentionally stay separate. Company ownership is a reviewed current subset; exact-filing 13F rows remain filing observations rather than being silently converted into canonical company or security positions.
 
 ## Five-minute quickstart
 
-You need Node.js 24, pnpm 11, and a Grizzly Bulls API key.
+You need:
+
+- Node.js 24
+- pnpm 11
+- a Grizzly Bulls API key
+
+Create a free API key from the [SEC API developer page](https://grizzlybulls.com/sec-api), then:
 
 ```bash
 git clone https://github.com/Grizzly-Bulls/sec-data-explorer.git
@@ -36,13 +50,24 @@ Add the key to `.env.local`:
 GRIZZLY_BULLS_API_KEY=your_key_here
 ```
 
-Then run:
+Start the app:
 
 ```bash
 pnpm dev
 ```
 
-Open `http://localhost:3000` and try the filing, financials, company ownership, and exact-filing 13F workflows.
+Open `http://localhost:3000`.
+
+Try these workflows:
+
+1. Search retained filings by exact form, observed filer CIK, or filing-date window.
+2. Open one exact accession and inspect its observed filing metadata and retained provenance.
+3. For a supported 10-K, 10-Q, or 8-K, inspect the normalized section manifest and individual section text.
+4. Open **Diffs** and compare two explicit accessions from the same supported base-form family.
+5. Open **Financials**, enter a reviewed issuer CIK, and inspect reported facts separately from derived metrics.
+6. Add an RFC 3339 **as-of timestamp** to reconstruct only observations that were source-available by that point in time.
+7. Open **Ownership** to inspect commercially admitted current Section 16-derived positions and Schedule 13 beneficial aggregates for one reviewed issuer.
+8. Open **13F holdings** from a 13F-HR filing detail, or enter an exact accession directly, to inspect source-faithful information-table rows without canonicalizing the filing observations.
 
 ## Architecture
 
@@ -51,7 +76,8 @@ The browser never receives the API key.
 ```text
 browser
   |
-  | GET reference-app routes
+  | GET /filings, /filing-diff, /financials, /ownership,
+  |     or /institutional-holdings
   v
 Next.js server-rendered application
   |
@@ -60,7 +86,7 @@ Next.js server-rendered application
 https://grizzlybulls.com/api/v1/sec
 ```
 
-The repository has no SEC database, EDGAR acquisition pipeline, account system, queue, or private Grizzly Bulls dependency.
+`GRIZZLY_BULLS_API_KEY` is read only by the server-side adapter under `src/lib/`. The repository has no SEC database, EDGAR acquisition pipeline, account system, queue, or private Grizzly Bulls dependency.
 
 ## Public API examples
 
@@ -75,6 +101,26 @@ curl --fail-with-body \
   "https://grizzlybulls.com/api/v1/sec/filings?form=10-K&cik=0000320193&limit=25&offset=0"
 ```
 
+### Extracted sections
+
+```bash
+curl --fail-with-body \
+  -H "Authorization: Bearer $GRIZZLY_BULLS_API_KEY" \
+  -H "Accept: application/json" \
+  "https://grizzlybulls.com/api/v1/sec/filings/0000320193-26-000077/sections"
+```
+
+### Explicit filing comparison
+
+```bash
+curl --fail-with-body \
+  -H "Authorization: Bearer $GRIZZLY_BULLS_API_KEY" \
+  -H "Accept: application/json" \
+  "https://grizzlybulls.com/api/v1/sec/filing-diff?from=0000320193-25-000079&to=0000320193-26-000077"
+```
+
+The diff surface reports section identities, added/removed/changed/unchanged status, content hashes, word counts, and count deltas. It does not automatically choose related filings or claim a line-level textual redline.
+
 ### Point-in-time company financials
 
 ```bash
@@ -83,6 +129,8 @@ curl --fail-with-body \
   -H "Accept: application/json" \
   "https://grizzlybulls.com/api/v1/sec/companies/0000320193/financials?period=quarterly&asOf=2025-03-31T23%3A59%3A59Z&limit=25"
 ```
+
+`asOf` is a historical knowledge cutoff, not a financial period-end filter. The API conservatively requires returned observations to have been source-available by that timestamp. Reported facts retain revision/evidence lineage; derived metrics are separately identified and carry explicit inputs.
 
 ### Commercially admitted company ownership
 
@@ -112,14 +160,20 @@ The machine-readable contract is available as [OpenAPI 3.1](https://grizzlybulls
 
 The reference app preserves the public API's boundaries instead of inventing friendlier-but-wrong semantics.
 
-- Observed filing identity is not silently promoted into canonical company identity.
-- Financial `asOf` means source-available-as-of, not merely period end.
-- Reported financial facts and derived metrics remain separate fact classes.
-- Company ownership requires commercial admission and excludes unresolved person identity.
-- The Schedule 13 surface is a reviewed subset and does not claim complete beneficial ownership.
-- Form 13F rows remain exact-filing observations; manager names, issuer labels, and CUSIPs are not silently canonicalized.
-- 13F amendment relationships are not automatically merged.
-- Retained evidence is served without request-time SEC.gov fetching.
+- Observed filer metadata is not silently promoted into a different canonical company identity.
+- The company-financials and company-ownership routes use reviewed canonical issuer mappings rather than filing-observed identity alone.
+- Filing date, discovery time, report period, source availability, and historical knowledge time are distinct concepts.
+- An `asOf` cutoff means source-available-as-of; a period ending before the cutoff does not by itself make the observation historically knowable.
+- Reported financial facts remain distinct from Grizzly Bulls derived metrics. Derived observations are not presented as source-reported and carry explicit methodology inputs.
+- Financial values remain decimal strings so the reference app does not silently change machine precision.
+- Company ownership requires commercial admission and excludes unresolved person identity; it remains a subset rather than a complete beneficial-ownership register.
+- Section 16 current positions and Schedule 13 beneficial aggregates remain separate models even inside the company-centric ownership response.
+- Source-faithful 13F holdings are a different data product from company ownership. They remain scoped to one exact accession, with no automatic amendment merge.
+- 13F manager names, issuer labels, and CUSIPs remain filing observations and are not silently canonicalized into manager, company, or security identity.
+- Retained evidence is provenance for the API response; opening a page does not cause a request-time SEC.gov fetch.
+- Extracted section text is a normalized projection of retained filing evidence, not a replacement source document.
+- 8-K item events are deterministic filing-structure observations. The app does not rename them into inferred corporate events.
+- Filing comparisons use two explicit accessions and do not automatically link amendments or previous filings.
 
 ## Validation
 
