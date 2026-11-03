@@ -7,6 +7,7 @@ import {
   buildCompanyOwnershipPath,
   buildFilingDiffPath,
   buildFilingSearchPath,
+  buildFilingContentSearchPath,
   buildFilingSectionPath,
   buildFilingSectionsPath,
   buildInstitutionalHoldingsPath,
@@ -15,6 +16,7 @@ import {
   type CompanyFinancialsInput,
   type CompanyOwnershipInput,
   type FilingSearchInput,
+  type FilingContentSearchInput,
   type InstitutionalHoldingsInput,
 } from './secApiCore';
 import {
@@ -29,6 +31,7 @@ import type {
   SecFilingDiffResponse,
   SecFilingResponse,
   SecFilingSearchResponse,
+  SecFilingContentSearchResponse,
   SecFilingSectionResponse,
   SecFilingSectionsResponse,
   SecInstitutionalHoldingsResponse,
@@ -126,6 +129,31 @@ function parseSearchResponse(payload: unknown): SecFilingSearchResponse {
     throw new SecApiRequestError('The SEC API returned an unexpected filing-search response.', 502);
   }
   return payload as unknown as SecFilingSearchResponse;
+}
+
+function parseContentSearchResponse(payload: unknown): SecFilingContentSearchResponse {
+  if (
+    !isRecord(payload) ||
+    !isRecord(payload.data) ||
+    !Array.isArray(payload.data.matches) ||
+    !payload.data.matches.every((item: unknown) =>
+      isRecord(item) &&
+      typeof item.accessionNumber === 'string' &&
+      typeof item.sectionKey === 'string' &&
+      typeof item.snippet === 'string' &&
+      (typeof item.observedFilerCik === 'string' || item.observedFilerCik === null) &&
+      typeof item.sourceContentSha256 === 'string' &&
+      typeof item.sectionContentSha256 === 'string') ||
+    !isRecord(payload.pagination) ||
+    !isRecord(payload.meta) ||
+    typeof payload.meta.indexedFilings !== 'number' ||
+    typeof payload.meta.indexedSections !== 'number' ||
+    typeof payload.meta.sourceAuthority !== 'string' ||
+    !isRecord(payload.meta.semantics)
+  ) {
+    throw new SecApiRequestError('The SEC API returned an unexpected filing-content-search response.', 502);
+  }
+  return payload as unknown as SecFilingContentSearchResponse;
 }
 
 function parseFilingResponse(payload: unknown): SecFilingResponse {
@@ -235,6 +263,12 @@ export async function searchSecFilings(
   input: FilingSearchInput,
 ): Promise<SecFilingSearchResponse> {
   return parseSearchResponse(await requestJson(buildFilingSearchPath(input)));
+}
+
+export async function searchSecFilingContent(
+  input: FilingContentSearchInput,
+): Promise<SecFilingContentSearchResponse> {
+  return parseContentSearchResponse(await requestJson(buildFilingContentSearchPath(input)));
 }
 
 export async function getSecFiling(accessionNumber: string): Promise<SecFilingResponse> {
