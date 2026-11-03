@@ -55,6 +55,41 @@ export interface SecFilingSearchResponse {
   meta: SecResponseMeta;
 }
 
+export interface SecFilingContentMatch {
+  accessionNumber: string;
+  formType: string;
+  observedFilerCik: string | null;
+  filingDate: string;
+  sectionKey: string;
+  sectionTitle: string | null;
+  snippet: string;
+  sourceContentSha256: string;
+  sectionContentSha256: string;
+  filingPath: string;
+  sectionPath: string;
+}
+
+export interface SecFilingContentSearchResponse {
+  data: { matches: SecFilingContentMatch[] };
+  pagination: SecPagination;
+  meta: {
+    apiVersion: string;
+    sourceAuthority: string;
+    indexedFilings: number;
+    indexedSections: number;
+    indexedFilingsWithObservedCik: number | null;
+    indexedSectionsWithObservedCik: number | null;
+    retrievedAt: string;
+    semantics: {
+      requestTimeSecFetch: false;
+      retainedCorpusOnly: true;
+      textSearchNotExhaustiveEdgar: true;
+      searchTermsCombinedWithAnd: true;
+      observedFilerCikIsCanonicalCompanyIdentity: false;
+    };
+  };
+}
+
 export interface SecFilingResponse {
   data: { filing: SecFiling };
   meta: SecResponseMeta;
