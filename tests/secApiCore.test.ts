@@ -9,6 +9,8 @@ import {
   buildExplorerInstitutionalHoldingsHref,
   buildExplorerOwnershipHref,
   buildExplorerSearchHref,
+  buildExplorerContentSearchHref,
+  buildFilingContentSearchPath,
   buildFilingDiffPath,
   buildFilingSearchPath,
   buildFilingSectionPath,
@@ -43,6 +45,25 @@ test('builds local search links without leaking machine API credentials', () => 
     buildExplorerSearchHref({ form: '8-K', filedFrom: '2026-10-01', offset: 25 }),
     '/filings?form=8-K&filedFrom=2026-10-01&offset=25',
   );
+});
+
+test('builds exact issuer-filtered retained content-search requests and shareable local links', () => {
+  assert.equal(
+    buildFilingContentSearchPath({
+      q: ' liquidity cash ', cik: '0000320193', form: '10-K',
+      filedFrom: '2025-01-01', limit: 10, offset: 20,
+    }),
+    '/filing-content-search?q=liquidity+cash&cik=0000320193&form=10-K&filedFrom=2025-01-01&limit=10&offset=20',
+  );
+  assert.equal(
+    buildExplorerContentSearchHref({ q: 'disclosure notes', cik: '0001045810', offset: 20 }),
+    '/content-search?q=disclosure+notes&cik=0001045810&offset=20',
+  );
+  assert.equal(
+    buildExplorerContentSearchHref({ q: 'fees & cash' }),
+    '/content-search?q=fees+%26+cash',
+  );
+  assert.equal(buildExplorerContentSearchHref({ q: '' }), '/content-search');
 });
 
 test('validates exact SEC accession-number shape', () => {
