@@ -121,6 +121,8 @@ dd { margin: 0; min-width: 0; }
 .footer-inner a { color: var(--ink); text-decoration: none; font-weight: 700; }
 
 @media (max-width: 850px) {
+  .header-inner { flex-wrap: wrap; gap: 10px 18px; padding: 10px 0; }
+  .top-nav { flex-wrap: wrap; gap: 10px 16px; }
   .hero-grid, .split-section, .detail-grid { grid-template-columns: 1fr; gap: 34px; }
   .hero-grid { padding: 64px 0; }
   .card-grid, .filing-list { grid-template-columns: 1fr; }
