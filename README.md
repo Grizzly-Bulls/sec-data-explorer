@@ -11,6 +11,7 @@ The application uses the same public API contract available to any developer. It
 ## What works today
 
 - bounded retained filing search by exact form type, observed filer CIK, and filing-date range;
+- offline-indexed retained 10-K/10-Q/8-K section-text search with literal AND terms, observed-filer CIK, form/date filtering, evidence hashes and exact section-reader links (not EDGAR-wide full text);
 - offset pagination through the public filing-search contract;
 - exact accession lookup from a search result;
 - observed filer and archive metadata plus retained-evidence/provenance display;
@@ -63,13 +64,14 @@ Open `http://localhost:3000`.
 Try these workflows:
 
 1. Search retained filings by exact form, observed filer CIK, or filing-date window.
-2. Open one exact accession and inspect its observed filing metadata and retained provenance.
-3. For a supported 10-K, 10-Q, or 8-K, inspect the normalized section manifest and individual section text.
-4. Open **Diffs** and compare two explicit accessions from the same supported base-form family.
-5. Open **Financials**, enter a reviewed issuer CIK, and inspect reported facts separately from derived metrics.
-6. Add an RFC 3339 **as-of timestamp** to reconstruct only observations that were source-available by that point in time.
-7. Open **Ownership** to inspect commercially admitted current Section 16-derived positions and Schedule 13 beneficial aggregates for one reviewed issuer.
-8. Open **13F holdings** from a 13F-HR filing detail, or enter an exact accession directly, to inspect source-faithful information-table rows without canonicalizing the filing observations.
+2. Search inside indexed 10-K/10-Q/8-K sections at `/content-search`, optionally filter by a filing-observed CIK, then open a normalized section or its exact filing evidence.
+3. Open one exact accession and inspect its observed filing metadata and retained provenance.
+4. For a supported 10-K, 10-Q, or 8-K, inspect the normalized section manifest and individual section text.
+5. Open **Diffs** and compare two explicit accessions from the same supported base-form family.
+6. Open **Financials**, enter a reviewed issuer CIK, and inspect reported facts separately from derived metrics.
+7. Add an RFC 3339 **as-of timestamp** to reconstruct only observations that were source-available by that point in time.
+8. Open **Ownership** to inspect commercially admitted current Section 16-derived positions and Schedule 13 beneficial aggregates for one reviewed issuer.
+9. Open **13F holdings** from a 13F-HR filing detail, or enter an exact accession directly, to inspect source-faithful information-table rows without canonicalizing the filing observations.
 
 ## Architecture
 
@@ -78,7 +80,7 @@ The browser never receives the API key.
 ```text
 browser
   |
-  | GET /filings, /filing-diff, /financials, /ownership,
+  | GET /filings, /content-search, /filing-diff, /financials, /ownership,
   |     or /institutional-holdings
   v
 Next.js server-rendered application
@@ -116,6 +118,17 @@ curl --fail-with-body \
   -H "Accept: application/json" \
   "https://grizzlybulls.com/api/v1/sec/filings?form=10-K&cik=0000320193&limit=25&offset=0"
 ```
+
+### Retained filing-text search by observed filer
+
+```bash
+curl --fail-with-body \
+  -H "Authorization: Bearer $GRIZZLY_BULLS_API_KEY" \
+  -H "Accept: application/json" \
+  "https://grizzlybulls.com/api/v1/sec/filing-content-search?q=liquidity&cik=0000320193&form=10-K&limit=10"
+```
+
+This searches indexed, retained normalized sections only (not all EDGAR filings or exhibits). Every literal word must match, and `cik` is the observed filer in the SEC catalog, not necessarily the accession prefix or a canonical company mapping. Results expose the indexed corpus size and section/source SHA-256 values; the explorer links to server-backed local readers without exposing the machine API key.
 
 ### Extracted sections
 
