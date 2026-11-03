@@ -131,10 +131,10 @@ dd { margin: 0; min-width: 0; }
 
 @media (max-width: 620px) {
   .shell { width: min(100% - 26px, 1160px); }
-  .header-inner { min-height: 64px; }
+  .header-inner { min-height: 64px; flex-wrap: wrap; gap: 8px 14px; padding: 10px 0; }
   .brand small { display: none; }
-  .top-nav { gap: 13px; font-size: 13px; }
-  .top-nav a:nth-child(2) { display: none; }
+  .top-nav { gap: 8px 14px; font-size: 13px; flex-wrap: wrap; padding-bottom: 5px; }
+  .top-nav a:nth-child(2) { display: inline; }
   h1 { font-size: 39px; }
   .hero-copy { font-size: 17px; }
   .section { padding: 56px 0; }
