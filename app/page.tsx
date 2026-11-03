@@ -10,6 +10,13 @@ const capabilities = [
   },
   {
     eyebrow: 'Available now',
+    title: 'Search inside filing sections',
+    body: 'Find literal terms in indexed retained 10-K, 10-Q and 8-K text, filter by observed filer CIK, and follow matching section evidence.',
+    href: '/content-search',
+    cta: 'Search filing text',
+  },
+  {
+    eyebrow: 'Available now',
     title: 'Compare what changed',
     body: 'Compare two explicit 10-K, 10-Q, or 8-K accessions section by section without automatic amendment matching or a fabricated redline.',
     href: '/filing-diff',
