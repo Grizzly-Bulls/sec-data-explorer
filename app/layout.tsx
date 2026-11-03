@@ -31,6 +31,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             </Link>
             <nav className="top-nav" aria-label="Primary navigation">
               <Link href="/filings">Filings</Link>
+              <Link href="/content-search">Text search</Link>
               <Link href="/filing-diff">Diffs</Link>
               <Link href="/financials">Financials</Link>
               <Link href="/ownership">Ownership</Link>
