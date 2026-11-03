@@ -10,6 +10,16 @@ export interface FilingSearchInput {
   offset?: number;
 }
 
+export interface FilingContentSearchInput {
+  q: string;
+  cik?: string;
+  form?: '10-K' | '10-Q' | '8-K';
+  filedFrom?: string;
+  filedTo?: string;
+  limit?: number;
+  offset?: number;
+}
+
 export type FinancialPeriodScope = 'all' | 'annual' | 'quarterly' | 'ttm';
 
 export interface CompanyFinancialsInput {
@@ -92,6 +102,18 @@ export function buildFilingSearchPath(input: FilingSearchInput): string {
   return `/filings?${params.toString()}`;
 }
 
+export function buildFilingContentSearchPath(input: FilingContentSearchInput): string {
+  const params = new URLSearchParams();
+  params.set('q', input.q.trim());
+  if (input.cik?.trim()) params.set('cik', input.cik.trim());
+  if (input.form) params.set('form', input.form);
+  if (input.filedFrom?.trim()) params.set('filedFrom', input.filedFrom.trim());
+  if (input.filedTo?.trim()) params.set('filedTo', input.filedTo.trim());
+  params.set('limit', String(input.limit ?? 10));
+  params.set('offset', String(input.offset ?? 0));
+  return `/filing-content-search?${params.toString()}`;
+}
+
 export function buildFilingSectionsPath(accessionNumber: string): string {
   return `/filings/${encodeURIComponent(accessionNumber)}/sections`;
 }
@@ -139,6 +161,18 @@ export function buildExplorerSearchHref(input: FilingSearchInput): string {
   if ((input.offset ?? 0) > 0) params.set('offset', String(input.offset));
   const query = params.toString();
   return query ? `/filings?${query}` : '/filings';
+}
+
+export function buildExplorerContentSearchHref(input: FilingContentSearchInput): string {
+  const params = new URLSearchParams();
+  if (input.q.trim()) params.set('q', input.q.trim());
+  if (input.cik?.trim()) params.set('cik', input.cik.trim());
+  if (input.form) params.set('form', input.form);
+  if (input.filedFrom?.trim()) params.set('filedFrom', input.filedFrom.trim());
+  if (input.filedTo?.trim()) params.set('filedTo', input.filedTo.trim());
+  if ((input.offset ?? 0) > 0) params.set('offset', String(input.offset));
+  const query = params.toString();
+  return query ? `/content-search?${query}` : '/content-search';
 }
 
 export function buildExplorerFilingDiffHref(
