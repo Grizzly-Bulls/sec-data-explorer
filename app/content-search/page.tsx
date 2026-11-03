@@ -155,6 +155,10 @@ export default async function ContentSearchPage({ searchParams }: { searchParams
               <strong>{result.meta.indexedFilingsWithObservedCik?.toLocaleString() ?? 'Unknown'}</strong>
               <span>filings with observed CIK</span>
             </div>
+            <div>
+              <strong>{result.meta.indexedSectionsWithObservedCik?.toLocaleString() ?? 'Unknown'}</strong>
+              <span>sections with observed CIK</span>
+            </div>
           </div>
 
           {result.data.matches.length === 0 ? (
