@@ -22,6 +22,7 @@ import {
   isValidFinancialPeriodScope,
   isValidSectionKey,
   isValidSecIssuerCik,
+  isValidObservedFilerCikList,
   normalizeApiBaseUrl,
   parseNonNegativeOffset,
   supportsFilingIntelligence,
@@ -64,6 +65,28 @@ test('builds exact issuer-filtered retained content-search requests and shareabl
     '/content-search?q=fees+%26+cash',
   );
   assert.equal(buildExplorerContentSearchHref({ q: '' }), '/content-search');
+  assert.equal(
+    buildFilingContentSearchPath({ q: 'liquidity', ciks: '320193, 1045810', form: '10-K' }),
+    '/filing-content-search?q=liquidity&ciks=0000320193%2C0001045810&form=10-K&limit=10&offset=0',
+  );
+  assert.equal(
+    buildExplorerContentSearchHref({ q: 'liquidity', ciks: '320193,1045810', offset: 10 }),
+    '/content-search?q=liquidity&ciks=0000320193%2C0001045810&offset=10',
+  );
+  assert.throws(() => buildFilingContentSearchPath({ q: 'cash', cik: '320193', ciks: '1045810' }));
+  assert.throws(() => buildExplorerContentSearchHref({ q: 'cash', cik: '320193', ciks: '1045810' }));
+  assert.throws(() => buildFilingContentSearchPath({ q: 'cash', ciks: '320193,0000320193' }));
+});
+
+test('validates bounded peer cohorts and detects equivalent padded CIKs', () => {
+  assert.equal(isValidObservedFilerCikList('320193,1045810'), true);
+  assert.equal(isValidObservedFilerCikList(' 320193, 1045810 '), true);
+  assert.equal(isValidObservedFilerCikList('1'), true);
+  for (const invalid of [
+    '', 'foo', '320193,', '320193,,1045810', '320193,0000320193',
+    Array.from({length: 11}, (_, index) => String(index + 1)).join(','),
+    '12345678901',
+  ]) assert.equal(isValidObservedFilerCikList(invalid), false, invalid);
 });
 
 test('validates exact SEC accession-number shape', () => {
