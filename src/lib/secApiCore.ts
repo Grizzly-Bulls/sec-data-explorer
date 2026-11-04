@@ -13,6 +13,7 @@ export interface FilingSearchInput {
 export interface FilingContentSearchInput {
   q: string;
   cik?: string;
+  ciks?: string;
   form?: '10-K' | '10-Q' | '8-K';
   filedFrom?: string;
   filedTo?: string;
@@ -72,6 +73,14 @@ export function isValidSecIssuerCik(value: string): boolean {
   return SEC_ISSUER_CIK_PATTERN.test(value.trim());
 }
 
+/** Validate a bounded source-observed filer cohort without inventing company identity. */
+export function isValidObservedFilerCikList(value: string): boolean {
+  const items = value.split(',').map(item => item.trim());
+  return items.length >= 1 && items.length <= 10
+    && items.every(item => isValidSecIssuerCik(item))
+    && new Set(items.map(item => item.padStart(10, '0'))).size === items.length;
+}
+
 export function isValidFinancialMetricKey(value: string): boolean {
   return FINANCIAL_METRIC_KEY_PATTERN.test(value.trim());
 }
@@ -105,7 +114,14 @@ export function buildFilingSearchPath(input: FilingSearchInput): string {
 export function buildFilingContentSearchPath(input: FilingContentSearchInput): string {
   const params = new URLSearchParams();
   params.set('q', input.q.trim());
+  if (input.cik?.trim() && input.ciks?.trim()) {
+    throw new Error('Choose either cik or ciks, not both.');
+  }
   if (input.cik?.trim()) params.set('cik', input.cik.trim());
+  if (input.ciks?.trim()) {
+    if (!isValidObservedFilerCikList(input.ciks)) throw new Error('Invalid observed CIK list.');
+    params.set('ciks', input.ciks.split(',').map(item => item.trim().padStart(10, '0')).join(','));
+  }
   if (input.form) params.set('form', input.form);
   if (input.filedFrom?.trim()) params.set('filedFrom', input.filedFrom.trim());
   if (input.filedTo?.trim()) params.set('filedTo', input.filedTo.trim());
@@ -166,7 +182,14 @@ export function buildExplorerSearchHref(input: FilingSearchInput): string {
 export function buildExplorerContentSearchHref(input: FilingContentSearchInput): string {
   const params = new URLSearchParams();
   if (input.q.trim()) params.set('q', input.q.trim());
+  if (input.cik?.trim() && input.ciks?.trim()) {
+    throw new Error('Choose either cik or ciks, not both.');
+  }
   if (input.cik?.trim()) params.set('cik', input.cik.trim());
+  if (input.ciks?.trim()) {
+    if (!isValidObservedFilerCikList(input.ciks)) throw new Error('Invalid observed CIK list.');
+    params.set('ciks', input.ciks.split(',').map(item => item.trim().padStart(10, '0')).join(','));
+  }
   if (input.form) params.set('form', input.form);
   if (input.filedFrom?.trim()) params.set('filedFrom', input.filedFrom.trim());
   if (input.filedTo?.trim()) params.set('filedTo', input.filedTo.trim());
