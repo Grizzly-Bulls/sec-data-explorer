@@ -11,7 +11,7 @@ const capabilities = [
   {
     eyebrow: 'Available now',
     title: 'Search inside filing sections',
-    body: 'Find literal terms in indexed retained 10-K, 10-Q and 8-K text, filter by observed filer CIK, and follow matching section evidence.',
+    body: 'Find literal terms in indexed retained 10-K, 10-Q and 8-K text, compare up to ten observed filers in one search, and follow exact section evidence.',
     href: '/content-search',
     cta: 'Search filing text',
   },

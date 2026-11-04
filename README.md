@@ -11,7 +11,7 @@ The application uses the same public API contract available to any developer. It
 ## What works today
 
 - bounded retained filing search by exact form type, observed filer CIK, and filing-date range;
-- offline-indexed retained 10-K/10-Q/8-K section-text search with literal AND terms, observed-filer CIK, form/date filtering, evidence hashes and exact section-reader links (not EDGAR-wide full text);
+- offline-indexed retained 10-K/10-Q/8-K section-text search with literal AND terms, one source-observed filer or a peer cohort of up to ten CIKs, form/date filtering, evidence hashes and exact section-reader links (not EDGAR-wide full text);
 - offset pagination through the public filing-search contract;
 - exact accession lookup from a search result;
 - observed filer and archive metadata plus retained-evidence/provenance display;
@@ -64,7 +64,7 @@ Open `http://localhost:3000`.
 Try these workflows:
 
 1. Search retained filings by exact form, observed filer CIK, or filing-date window.
-2. Search inside indexed 10-K/10-Q/8-K sections at `/content-search`, optionally filter by a filing-observed CIK, then open a normalized section or its exact filing evidence.
+2. Search inside indexed 10-K/10-Q/8-K sections at `/content-search`, optionally filter by one filing-observed CIK or a bounded peer group, then open a normalized section or its exact filing evidence.
 3. Open one exact accession and inspect its observed filing metadata and retained provenance.
 4. For a supported 10-K, 10-Q, or 8-K, inspect the normalized section manifest and individual section text.
 5. Open **Diffs** and compare two explicit accessions from the same supported base-form family.
@@ -128,7 +128,9 @@ curl --fail-with-body \
   "https://grizzlybulls.com/api/v1/sec/filing-content-search?q=liquidity&cik=0000320193&form=10-K&limit=10"
 ```
 
-This searches indexed, retained normalized sections only (not all EDGAR filings or exhibits). Every literal word must match, and `cik` is the observed filer in the SEC catalog, not necessarily the accession prefix or a canonical company mapping. Results expose the indexed corpus size and section/source SHA-256 values; the explorer links to server-backed local readers without exposing the machine API key.
+To compare two observed filers in one request, replace `cik=0000320193` with `ciks=0000320193,0001045810`. The public explorer includes a no-signup Apple/NVIDIA example. `cik` and `ciks` cannot be combined; the peer filter accepts up to ten distinct CIKs, and result ranking is shared across the selected group.
+
+This searches indexed, retained normalized sections only (not all EDGAR filings or exhibits). Every literal word must match, and CIK filters use observed filers from the SEC catalog, not necessarily accession prefixes or canonical company mappings. Results expose the indexed corpus size and section/source SHA-256 values; the explorer links to server-backed local readers without exposing the machine API key.
 
 ### Extracted sections
 
