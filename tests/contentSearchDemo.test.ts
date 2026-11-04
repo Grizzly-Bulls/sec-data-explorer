@@ -9,6 +9,10 @@ test('hosted content search uses server-only SEC adapter and keeps credentials o
   const page = read('app/content-search/page.tsx');
   const adapter = read('src/lib/secApi.ts');
   assert.match(page, /searchSecFilingContent/);
+  assert.match(page, /isValidObservedFilerCikList\(ciks\)/);
+  assert.match(page, /validIssuerScope/);
+  assert.match(page, /name="ciks"/);
+  assert.match(page, /Try Apple \+ NVIDIA/);
   assert.match(adapter, /parseContentSearchResponse\(await requestJson\(buildFilingContentSearchPath\(input\)\)\)/);
   assert.match(adapter, /await enforceHostedDemoBoundary\(\)/);
   assert.match(adapter, /Authorization:/);
