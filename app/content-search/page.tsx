@@ -5,6 +5,7 @@ import {
   buildExplorerContentSearchHref,
   isValidAccessionNumber,
   isValidSecIssuerCik,
+  isValidObservedFilerCikList,
   isValidSectionKey,
   parseNonNegativeOffset,
   type FilingContentSearchInput,
@@ -15,7 +16,7 @@ import styles from './content-search.module.css';
 
 export const metadata = {
   title: 'Search retained SEC filing text',
-  description: 'Search retained SEC filing sections by literal terms, observed filer CIK, form and filing date. Follow source evidence in the open-source explorer.',
+  description: 'Search retained SEC filing sections by literal terms, one observed filer or a selected peer cohort of up to ten CIKs, form and filing date.',
 };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -36,16 +37,19 @@ export default async function ContentSearchPage({ searchParams }: { searchParams
   const params = await searchParams;
   const q = first(params.q);
   const cik = first(params.cik);
+  const ciks = first(params.ciks);
   const form = first(params.form).toUpperCase();
   const filedFrom = first(params.filedFrom);
   const filedTo = first(params.filedTo);
   const offset = parseNonNegativeOffset(first(params.offset));
-  const submitted = Boolean(q || cik || form || filedFrom || filedTo);
+  const submitted = Boolean(q || cik || ciks || form || filedFrom || filedTo);
   const tokens = q.normalize('NFKC').match(/[\p{L}\p{N}]+/gu) ?? [];
   const validQuery = q.length >= 1 && q.length <= 200
     && tokens.length >= 1 && tokens.length <= 8
     && tokens.every(token => token.length <= 40);
   const validCik = !cik || isValidSecIssuerCik(cik);
+  const validCiks = !ciks || isValidObservedFilerCikList(ciks);
+  const validIssuerScope = !(cik && ciks);
   const validForm = !form || form === '10-K' || form === '10-Q' || form === '8-K';
   const validDates = (!filedFrom || /^\d{4}-\d{2}-\d{2}$/.test(filedFrom))
     && (!filedTo || /^\d{4}-\d{2}-\d{2}$/.test(filedTo))
@@ -54,6 +58,7 @@ export default async function ContentSearchPage({ searchParams }: { searchParams
   const filters: FilingContentSearchInput = {
     q,
     cik: cik || undefined,
+    ciks: ciks || undefined,
     form: validForm && form ? form as '10-K' | '10-Q' | '8-K' : undefined,
     filedFrom: filedFrom || undefined,
     filedTo: filedTo || undefined,
@@ -61,7 +66,7 @@ export default async function ContentSearchPage({ searchParams }: { searchParams
 
   let result: SecFilingContentSearchResponse | null = null;
   let error: string | null = null;
-  if (submitted && validQuery && validCik && validForm && validDates) {
+  if (submitted && validQuery && validCik && validCiks && validIssuerScope && validForm && validDates) {
     try {
       result = await searchSecFilingContent({ ...filters, limit: 10, offset });
     } catch (cause) {
@@ -69,14 +74,14 @@ export default async function ContentSearchPage({ searchParams }: { searchParams
     }
   }
 
-  const invalid = submitted && (!validQuery || !validCik || !validForm || !validDates);
+  const invalid = submitted && (!validQuery || !validCik || !validCiks || !validIssuerScope || !validForm || !validDates);
 
   return (
     <div className="shell page-stack">
       <section className="page-heading">
         <p className="eyebrow">Retained section search</p>
         <h1>Find evidence inside SEC filings.</h1>
-        <p>Search normalized text from retained 10-K, 10-Q and 8-K sections. Filter by the CIK observed in the SEC filing catalog, not an accession prefix or a guessed canonical identity.</p>
+        <p>Search normalized text from retained 10-K, 10-Q and 8-K sections. Search one filer or compare selected peers using CIKs observed in the SEC filing catalog, not accession prefixes or guessed company identities.</p>
       </section>
 
       <form className="search-panel" action="/content-search" method="get">
@@ -90,7 +95,13 @@ export default async function ContentSearchPage({ searchParams }: { searchParams
             <span>Observed filer CIK (optional)</span>
             <input name="cik" maxLength={10} pattern="[0-9]{1,10}" inputMode="numeric"
               defaultValue={cik} placeholder="0000320193" />
-            <small>Apple: 0000320193 · NVIDIA: 0001045810.</small>
+            <small>Choose this field or the peer-company field below, not both.</small>
+          </label>
+          <label>
+            <span>Peer-company observed CIKs (optional)</span>
+            <input name="ciks" maxLength={160} defaultValue={ciks}
+              placeholder="0000320193,0001045810" aria-describedby="peer-cik-help" />
+            <small id="peer-cik-help">Enter 1–10 distinct, comma-separated CIKs. Apple: 0000320193 · NVIDIA: 0001045810. Only filers with indexed sections are searchable.</small>
           </label>
           <label>
             <span>Filing form</span>
@@ -112,6 +123,7 @@ export default async function ContentSearchPage({ searchParams }: { searchParams
         </div>
         <div className="search-actions">
           <button className="button primary" type="submit">Search filing text</button>
+          <Link className="text-link" href="/content-search?q=liquidity&ciks=0000320193%2C0001045810&form=10-K">Try Apple + NVIDIA</Link>
           {submitted ? <Link className="text-link" href="/content-search">Clear filters</Link> : null}
         </div>
       </form>
@@ -119,14 +131,14 @@ export default async function ContentSearchPage({ searchParams }: { searchParams
       {!submitted ? (
         <section className="notice-panel">
           <strong>Search a bounded retained corpus.</strong>
-          <p>Try &ldquo;liquidity&rdquo; and optionally an observed filer CIK. Search terms are combined with AND. Results link to the normalized section reader and exact filing context.</p>
+          <p>Try &ldquo;liquidity&rdquo; for Apple and NVIDIA together, or select one observed filer. Every search word must match in a retained section. Results link to normalized text and exact filing evidence.</p>
         </section>
       ) : null}
 
       {invalid ? (
         <section className="error-panel" role="alert">
           <strong>Check your search filters</strong>
-          <p>Provide one to eight searchable words (200 characters maximum), an optional numeric CIK, a supported form, and a valid filing-date range.</p>
+          <p>Provide one to eight searchable words (200 characters maximum), either one numeric CIK or 1–10 distinct comma-separated CIKs (not both), a supported form, and a valid filing-date range.</p>
         </section>
       ) : null}
       {error ? (
@@ -221,7 +233,7 @@ export default async function ContentSearchPage({ searchParams }: { searchParams
           </nav>
           <section className="notice-panel">
             <strong>Scope and provenance</strong>
-            <p>This search includes only materialized, indexed filing sections—not every EDGAR filing, exhibit or original document. CIK attribution is an observed filing-catalog fact, not a canonical company identity. Section text is a normalized retained-data projection. No request-time SEC.gov fetch is performed.</p>
+            <p>This search includes only materialized, indexed filing sections—not every EDGAR filing, exhibit or original document. Peer results are ranked together, not allotted an equal number per company; a zero-match company may still have unindexed disclosures. CIK attribution is observed filing-catalog metadata, not canonical company identity. Section text is a normalized projection. No request-time SEC.gov fetch is performed.</p>
           </section>
           <section className="response-strip">
             <span>API authority <strong>{result.meta.sourceAuthority}</strong></span>
